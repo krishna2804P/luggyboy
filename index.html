@@ -697,7 +697,7 @@ footer{background:var(--bk2);border-top:1px solid #131313;padding:38px 5% 20px}
 
 <script>
 /* ══════════ STATE ══════════ */
-const API = "https://luggyboy.onrender.com";
+const API = window.CFG.API_BASE;
 let gMap,pickMark,dropMark,routeLine,pMarkers=[];
 let uLat=null,uLng=null,dLat=null,dLng=null,realDist=null;
 let mapsOn=false,coup=0,couponCode='',isBooking=false;
