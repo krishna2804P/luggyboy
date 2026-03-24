@@ -403,6 +403,14 @@ app.post('/api/booking/accept', (req, res) => {
 /** POST /api/booking/start   ← RAPIDO OTP VERIFY
  * Body: { bookingId, otp }
  */
+/** POST /api/booking/status   ← LIVE TRACKING CHECKER */
+app.post('/api/booking/status', (req, res) => {
+  const { bookingId } = req.body;
+  const booking = DB.bookings.find(b => b.bookingId === bookingId);
+  
+  if (!booking) return res.json({ ok: false });
+  res.json({ ok: true, status: booking.status, startedAt: booking.startedAt });
+});
 
 /** POST /api/booking/end   ← END TRIP & GENERATE BILL */
 app.post('/api/booking/end', (req, res) => {
