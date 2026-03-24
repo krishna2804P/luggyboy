@@ -403,6 +403,32 @@ app.post('/api/booking/accept', (req, res) => {
 /** POST /api/booking/start   ← RAPIDO OTP VERIFY
  * Body: { bookingId, otp }
  */
+/** POST /api/booking/end   ← END TRIP & GENERATE BILL */
+app.post('/api/booking/end', (req, res) => {
+  const { bookingId } = req.body;
+  const booking = DB.bookings.find(b => b.bookingId === bookingId);
+
+  if (!booking) return res.status(404).json({ ok: false, msg: 'Booking not found' });
+  if (booking.status !== 'in_progress') return res.status(400).json({ ok: false, msg: 'Service is not in progress right now' });
+
+  // Trip khatam karo aur time note karo
+  booking.status = 'completed';
+  booking.endedAt = Date.now();
+
+  // 🧮 Bill Calculation Logic
+  const durationMs = booking.endedAt - booking.startedAt;
+  const durationMins = Math.ceil(durationMs / 60000) || 1; // Kam se kam 1 minute
+  
+  const baseFare = 50; // ₹50 fixed charge
+  const timeCharge = durationMins * 2; // ₹2 per minute
+  const totalAmount = baseFare + timeCharge;
+
+  // Bill save karo
+  booking.bill = { durationMins, baseFare, timeCharge, totalAmount };
+  saveDB();
+  
+  res.json({ ok: true, msg: 'Trip Ended Successfully', bill: booking.bill });
+});
 app.post('/api/booking/start', (req, res) => {
   const { bookingId, otp } = req.body;
   const booking = DB.bookings.find(b => b.bookingId === bookingId);
