@@ -15,8 +15,8 @@
  *   POST   /api/auth/verify           – OTP verify
  *   POST   /api/booking               – Create booking
  *   GET    /api/booking/:id           – Get booking
- *   GET    /api/bookings/user/:phone  – User booking history
- *   POST   /api/booking/accept        – Porter accepts (LOCK)
+ *   GET    /api/s/user/:phone  – User  history
+ *   POST   /api//accept        – Porter accepts (LOCK)
  *   POST   /api/booking/complete      – Mark complete
  *   POST   /api/booking/cancel        – Cancel booking
  *   POST   /api/feedback              – Submit rating
@@ -366,6 +366,10 @@ app.post('/api/booking/accept', (req, res) => {
 
   // ── Assign ──
   booking.assignedPorter = { id: porter.id, name: porter.name, phone: porter.phone, rating: porter.rating };
+// ── RAPIDO STYLE OTP GENERATE ──
+  booking.startOtp = Math.floor(1000 + Math.random() * 9000).toString(); // 4 digit OTP generate
+  
+  booking.assignedPorter = { id: porter.id, name: porter.name, phone: porter.phone, rating: porter.rating };
   booking.status     = 'confirmed';
   booking.acceptedAt = Date.now();
   saveDB();
@@ -395,6 +399,22 @@ app.post('/api/booking/accept', (req, res) => {
     userWaLink: `https://wa.me/${booking.userPhone}?text=${userMsg}`,
     callLink: `tel:+${booking.userPhone}`,
   });
+});
+/** POST /api/booking/start   ← RAPIDO OTP VERIFY
+ * Body: { bookingId, otp }
+ */
+app.post('/api/booking/start', (req, res) => {
+  const { bookingId, otp } = req.body;
+  const booking = DB.bookings.find(b => b.bookingId === bookingId);
+  
+  if (!booking) return res.status(404).json({ ok: false, msg: 'Booking not found' });
+  if (booking.startOtp !== otp) return res.status(400).json({ ok: false, msg: '❌ Wrong OTP! Ask customer again.' });
+
+  booking.status = 'in_progress';
+  booking.startedAt = Date.now();
+  saveDB();
+  
+  res.json({ ok: true, msg: '✅ OTP Matched! Service Started.' });
 });
 
 /** POST /api/booking/complete
