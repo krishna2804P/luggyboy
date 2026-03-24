@@ -122,32 +122,30 @@ nav{position:fixed;top:0;inset-inline:0;z-index:300;display:flex;align-items:cen
 .lfi::placeholder{color:#383838;letter-spacing:0}
 .lf-hint{font-size:.72rem;color:#555;margin-top:5px;font-weight:300}
 .otp-row {
-    display: flex;
-    justify-content: center;
-    gap: 8px; /* Boxes ke beech thoda gap */
-    margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px; 
+  margin: 20px 0;
 }
-
 .obox {
-    width: 45px; /* 6 boxes ke hisaab se perfect width */
-    height: 50px; /* Thodi height bhi adjust ki hai */
-    background: var(--bk3);
-    border: 1.5px solid #252525;
-    border-radius: var(--r2);
-    color: var(--wh);
-    font-family: 'Syne', sans-serif;
-    font-size: 1.3rem;
-    font-weight: 800;
-    text-align: center;
-    outline: none;
-    transition: border-color .2s;
-    caret-color: var(--y);
-    padding: 0;
-    flex-shrink: 0; /* Box ko pichakne se rokega */
+  width: 45px; 
+  height: 50px; 
+  background: var(--bk3);
+  border: 1.5px solid #252525;
+  border-radius: var(--r2);
+  color: var(--wh);
+  font-family: 'Syne', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+  transition: border-color .2s;
+  caret-color: var(--y);
+  padding: 0;
+  flex-shrink: 0; 
 }
-
 .obox:focus {
-    border-color: var(--y);
+  border-color: var(--y);
 }
 .otp-resend{font-size:.73rem;color:#555;text-align:right;margin-top:5px}
 .otp-resend button{background:none;border:none;color:var(--y);cursor:pointer;font-family:'Outfit',sans-serif;font-size:.73rem;font-weight:600}
@@ -368,25 +366,9 @@ footer{background:var(--bk2);border-top:1px solid #131313;padding:38px 5% 20px}
 .wa-ft:hover{background:rgba(34,197,94,.13)}
 
 /* ════════ MY BOOKINGS SCREEN ════════ */
-#s-bookings{padding:80px 5% 40px}
-#s-bookings h2{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;letter-spacing:-.5px;margin-bottom:7px}
-.sc-sub{font-size:.83rem;color:#666;margin-bottom:24px;font-weight:300}
-.bk-list{display:flex;flex-direction:column;gap:11px}
-.bkitem{background:var(--bk2);border:1.5px solid #1e1e1e;border-radius:var(--r);padding:16px 18px}
-.bki-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
-.bki-id{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:800;color:var(--y)}
-.bki-st{font-size:.62rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:40px}
-.bki-st.completed{background:rgba(34,197,94,.08);color:var(--green);border:1px solid rgba(34,197,94,.16)}
-.bki-st.confirmed{background:rgba(96,165,250,.08);color:var(--blue);border:1px solid rgba(96,165,250,.16)}
-.bki-st.pending{background:var(--y2);color:var(--y);border:1px solid rgba(255,214,0,.18)}
-.bki-st.expired,.bki-st.cancelled{background:rgba(255,68,68,.07);color:#FF6666;border:1px solid rgba(255,68,68,.14)}
-.bki-route{font-size:.78rem;color:#aaa;margin-bottom:5px}
-.bki-meta{display:flex;gap:12px;font-size:.7rem;color:#555;font-weight:300;flex-wrap:wrap}
-.empty-st{text-align:center;padding:56px 20px;color:#444}
-.empty-st .esi{font-size:2.8rem;margin-bottom:12px;filter:grayscale(1);opacity:.2}
-.empty-st p{font-size:.83rem;font-weight:300;line-height:1.7}
-.btn-back{display:inline-flex;align-items:center;gap:7px;background:none;border:1px solid #2a2a2a;color:#888;font-family:'Outfit',sans-serif;font-size:.8rem;font-weight:500;padding:8px 16px;border-radius:40px;cursor:pointer;margin-bottom:22px;transition:var(--tr)}
-.btn-back:hover{border-color:#444;color:var(--wh)}
+#s-bookings { padding: 80px 5% 40px; }
+#s-bookings h2 { color:var(--y); text-transform:uppercase; font-weight:800; font-size:1.5rem; margin-bottom:20px; }
+#history-list { display: flex; flex-direction: column; gap: 11px; }
 
 /* ════════ MODALS ════════ */
 .ov{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.9);backdrop-filter:blur(14px);align-items:center;justify-content:center;padding:14px}
@@ -450,7 +432,6 @@ footer{background:var(--bk2);border-top:1px solid #131313;padding:38px 5% 20px}
 <div class="offline-bar" id="offline-bar">📵 No internet — check your connection</div>
 <div class="loader-ov" id="loader"><div class="loader-ring"></div><div class="loader-text">DISPATCHING</div><div class="loader-sub" id="loader-sub">Connecting to backend...</div></div>
 
-<!-- ════════ NAV ════════ -->
 <nav>
   <a class="logo" href="#" onclick="goS('main')"><div class="logo-box">🧳</div>Luggy<span>Boy</span></a>
   <ul class="nav-links" id="nl">
@@ -467,7 +448,6 @@ footer{background:var(--bk2);border-top:1px solid #131313;padding:38px 5% 20px}
   </div>
 </nav>
 
-<!-- ════════ SIDEBAR ════════ -->
 <div class="sb-ov" id="sbov" onclick="closeSB()"></div>
 <div class="sb" id="sb">
   <div class="sb-head">
@@ -476,8 +456,8 @@ footer{background:var(--bk2);border-top:1px solid #131313;padding:38px 5% 20px}
   </div>
   <div id="sb-prof"></div>
   <div class="sb-nav">
-<button class="sbi" onclick="closeSB();goS('main')"><div class="sbi-ico">🏠</div><div><div class="sbi-lbl">Home</div><div class="sbi-sub">Book a porter</div></div></button>
-  <button class="sbi" onclick="closeSB();goS('bookings')"><div class="sbi-ico">📋</div><div><div class="sbi-lbl">My Bookings</div><div class="sbi-sub">History & status</div></div><span class="sbi-badge" id="sb-cnt">0</span></button>
+  <button class="sbi" onclick="closeSB();goS('main')"><div class="sbi-ico">🏠</div><div><div class="sbi-lbl">Home</div><div class="sbi-sub">Book a porter</div></div></button>
+  <button class="sbi" onclick="closeSB();goS('bookings');loadMyBookings()"><div class="sbi-ico">📋</div><div><div class="sbi-lbl">My Bookings</div><div class="sbi-sub">History & status</div></div><span class="sbi-badge" id="sb-cnt">0</span></button>
   <button class="sbi" onclick="closeSB();openModal('referModal')"><div class="sbi-ico">🎁</div><div><div class="sbi-lbl">Refer & Earn</div><div class="sbi-sub">₹20 per referral</div></div></button>
   <button class="sbi" onclick="closeSB();window.open('https://wa.me/'+CFG.ADMIN_WA,'_blank')"><div class="sbi-ico">💬</div><div><div class="sbi-lbl">Support</div><div class="sbi-sub">WhatsApp — 2 min reply</div></div></button>
   <button class="sbi" onclick="closeSB();document.getElementById('join').scrollIntoView({behavior:'smooth'})"><div class="sbi-ico">🧑‍💼</div><div><div class="sbi-lbl">Become a Porter</div><div class="sbi-sub">Earn ₹600–1200/day</div></div></button>
@@ -491,7 +471,6 @@ footer{background:var(--bk2);border-top:1px solid #131313;padding:38px 5% 20px}
   <div class="sb-foot"><button class="btn-logout" id="sb-logout" onclick="logout()">Sign Out</button></div>
 </div>
 
-<!-- ════════ LOGIN SCREEN ════════ -->
 <div id="s-login" class="screen active">
   <div class="login-glow"></div><div class="login-grid"></div>
   <div class="login-card">
@@ -526,7 +505,6 @@ footer{background:var(--bk2);border-top:1px solid #131313;padding:38px 5% 20px}
   </div>
 </div>
 
-<!-- ════════ MAIN SCREEN ════════ -->
 <div id="s-main" class="screen">
   <div class="nobargain-bar">🛡️ No Bargaining Guarantee · Fixed Price · Verified Porters · Cash / UPI ⚡</div>
   <section class="hero" id="home">
@@ -541,7 +519,7 @@ footer{background:var(--bk2);border-top:1px solid #131313;padding:38px 5% 20px}
         <div class="tp"><div class="tpd b"></div>2–5 Min ETA</div>
         <div class="tp"><div class="tpd g"></div>Cash / UPI</div>
       </div>
-      <!-- BOOKING CARD -->
+      
       <div class="bcard" id="booking">
         <div class="bc-hd"><div class="bc-tag">⚡ Smart Booking</div><div class="bc-eta"><div class="etad"></div>Porters nearby</div></div>
         <div class="fw"><span class="fi">📍</span><input type="text" id="pickup" placeholder="Pickup — type or 📡 GPS" autocomplete="off"/><button class="gps-btn" onclick="getGPS()">📡 GPS</button></div>
@@ -567,7 +545,6 @@ footer{background:var(--bk2);border-top:1px solid #131313;padding:38px 5% 20px}
         <div class="map-hint">📌 <b>Tip:</b> Click the map to set your exact drop pin</div>
       </div>
     </div>
-    <!-- MAP -->
     <div style="position:relative;z-index:1">
       <div class="map-panel">
         <div class="map-top">
@@ -651,14 +628,15 @@ footer{background:var(--bk2);border-top:1px solid #131313;padding:38px 5% 20px}
   </footer>
 </div>
 
-<!-- ════════ MY BOOKINGS ════════ -->
-<div id="s-bookings" class="screen">
-  <button class="btn-back" onclick="goS('main')">← Back</button>
-  <h2>My Bookings</h2><p class="sc-sub">Your booking history from this device.</p>
-  <div class="bk-list" id="bk-list"></div>
+<div id="s-bookings" class="screen" style="padding:80px 5% 40px;">
+  <button class="btn-back" onclick="goS('main')">← Back to Home</button>
+  <h2 style="color:var(--y); text-transform:uppercase; font-weight:800; font-size:1.5rem; margin-bottom:20px;">My Bookings</h2>
+  
+  <div id="history-list" class="bk-list">
+    <p style="color:#888; text-align:center; padding:20px;">Loading your history...</p>
+  </div>
 </div>
 
-<!-- ════════ MODALS ════════ -->
 <div class="ov" id="bookModal"><div class="modal">
   <div class="m-ico">🚀</div><h3>Dispatched!</h3>
   <div class="m-bid" id="m-bid">LB-00000</div>
@@ -712,7 +690,6 @@ footer{background:var(--bk2);border-top:1px solid #131313;padding:38px 5% 20px}
 
 <div class="toast" id="toast-el"></div>
 
-<!-- ════════ MAPS LOADER ════════ -->
 <script>
 (function(){
   const k=window.CFG.MAPS_KEY;
@@ -830,14 +807,12 @@ async function sendOTP(resend=false){
   const r=await api('/auth/login',{method:'POST',body:JSON.stringify({phone})});
   btn.disabled=false;btn.textContent='GET OTP →';
   if(!r.ok){toast('❌ '+r.msg,'r');return;}
-  devOTP=r.dev_otp||'';// dev mode — remove in production
+  devOTP=r.dev_otp||'';
   document.getElementById('otp-ph').textContent=phone;
   document.getElementById('ls1').classList.remove('on');
   document.getElementById('ls2').classList.add('on');
-  // Open WA to send OTP
   if(r.waLink)window.open(r.waLink,'_blank');
   toast(resend?'📲 OTP resent!':'📲 OTP sent via WhatsApp!','g');
-  // Dev console tip
   if(devOTP)console.log(`🔐 Dev OTP for ${phone}: ${devOTP}`);
 }
 
@@ -897,7 +872,7 @@ recalc();
 
 function updateDist(){if(uLat!==null&&dLat!==null){realDist=hav(uLat,uLng,dLat,dLng);recalc();if(mapsOn)drawRoute();}}
 
-/* ══════════ COUPON (validated by backend) ══════════ */
+/* ══════════ COUPON ══════════ */
 async function applyCoupon(){
   const code=document.getElementById('coup-in').value.trim().toUpperCase();
   if(!code){toast('⚠️ Enter a coupon code','y');return;}
@@ -932,7 +907,7 @@ function getGPS(){
       }
       updateDist();toast('✅ Pickup set!','g');
     },
-    err=>{const m={1:'❌ Location denied. Allow in browser settings.',2:'❌ Location unavailable.',3:'❌ Timed out.'};toast(m[err.code]||'❌ Location error','r');}
+    err=>{const m={1:'❌ Location denied.',2:'❌ Location unavailable.',3:'❌ Timed out.'};toast(m[err.code]||'❌ Location error','r');}
     ,{timeout:10000,maximumAge:60000}
   );
 }
@@ -949,7 +924,7 @@ document.getElementById('pickup').addEventListener('keydown',e=>{
   const v=e.target.value.trim();if(!v)return;
   new google.maps.Geocoder().geocode({address:v+', Indore, India'},(r,s)=>{
     if(s==='OK'&&r[0]){uLat=r[0].geometry.location.lat();uLng=r[0].geometry.location.lng();document.getElementById('badge-u').textContent='📍 '+v.split(',')[0];if(pickMark)pickMark.setMap(null);pickMark=mkM(uLat,uLng,'#22C55E','#fff');gMap.setCenter({lat:uLat,lng:uLng});showPMarkers();updateDist();}
-    else toast('⚠️ Location not found. Be specific.','y');
+    else toast('⚠️ Location not found.','y');
   });
 });
 
@@ -987,7 +962,6 @@ window.initMap=function(){
     zoom:14,center:{lat:22.7196,lng:75.8577},disableDefaultUI:true,zoomControl:true,clickableIcons:false,
     styles:[{elementType:'geometry',stylers:[{color:'#111'}]},{elementType:'labels.text.fill',stylers:[{color:'#666'}]},{elementType:'labels.text.stroke',stylers:[{color:'#0d0d0d'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#1e1e1e'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#272727'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#070707'}]},{featureType:'poi',stylers:[{visibility:'off'}]}]
   });
-  /* MAP CLICK → DROP PIN */
   gMap.addListener('click',event=>{
     dLat=event.latLng.lat();dLng=event.latLng.lng();
     if(dropMark)dropMark.setMap(null);
@@ -996,7 +970,6 @@ window.initMap=function(){
     document.getElementById('map-instr').style.display='none';
     updateDist();toast('📌 Drop pinned!','g');
   });
-  /* Places autocomplete */
   try{
     const ac=new google.maps.places.Autocomplete(document.getElementById('pickup'),{componentRestrictions:{country:'IN'}});
     ac.addListener('place_changed',()=>{const pl=ac.getPlace();if(!pl.geometry)return;uLat=pl.geometry.location.lat();uLng=pl.geometry.location.lng();document.getElementById('badge-u').textContent='📍 '+pl.name;if(pickMark)pickMark.setMap(null);pickMark=mkM(uLat,uLng,'#22C55E','#fff');gMap.setCenter({lat:uLat,lng:uLng});showPMarkers();updateDist();});
@@ -1042,15 +1015,12 @@ async function initiateBooking(){
   lastBooking=r.booking;
   lastPorter=null;
 
-  /* Save to local history */
   const bks=JSON.parse(localStorage.getItem('lb_bookings')||'[]');
   bks.unshift(r.booking);localStorage.setItem('lb_bookings',JSON.stringify(bks));
   updateSBCount();
 
-  /* Open WhatsApp for each active porter (staggered) */
   r.waLinks.forEach((w,i)=>setTimeout(()=>window.open(w.waLink,'_blank'),i*650));
 
-  /* Build modal */
   document.getElementById('m-bid').textContent=lastBID;
   document.getElementById('dispatch-list').innerHTML=r.waLinks.map(w=>`<div class="db-row">✅ <strong>${w.porterName}</strong></div>`).join('');
   const b=r.booking;
@@ -1082,7 +1052,7 @@ async function assignPorter(pid){
   lastPorter=r.porter;
   closeModal('assignModal');
   const b=r.booking,p=r.porter;
-document.getElementById('assigned-dtl').innerHTML = `
+  document.getElementById('assigned-dtl').innerHTML = `
     <div style="background:rgba(34,197,94,.08); border:1.5px dashed var(--green); border-radius:8px; padding:15px; text-align:center; margin-bottom:15px;">
        <div style="font-size:0.65rem; color:var(--green); text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:5px;">Share this OTP with Porter to start</div>
        <div style="font-size:2.2rem; font-family:'Syne', sans-serif; font-weight:800; color:var(--wh); letter-spacing:6px;">${b.startOtp}</div>
@@ -1090,11 +1060,9 @@ document.getElementById('assigned-dtl').innerHTML = `
     <div class="mrow"><span class="mk">👤 Porter</span><span class="mv y">${p.name}</span></div>
     <div class="mrow"><span class="mk">⭐ Rating</span><span class="mv">${p.rating} · ${p.trips} trips</span></div>
   `;
-   // OTP dikhane ke baad background tracking chalu karo
   checkStatusLoop(b.bookingId);
   document.getElementById('call-btn').href=`tel:+${p.phone}`;
   document.getElementById('assigned-wa').href=r.userWaLink;
-  // Notify user
   window.open(r.userWaLink,'_blank');
   openModal('assignedModal');
   toast(`✅ ${p.name} assigned!`,'g');
@@ -1147,15 +1115,46 @@ function shareRef(){
 }
 
 /* ══════════ MY BOOKINGS ══════════ */
-function renderBookings(){
-  const bks=JSON.parse(localStorage.getItem('lb_bookings')||'[]');
-  const el=document.getElementById('bk-list');
-  if(!bks.length){el.innerHTML=`<div class="empty-st"><div class="esi">🧳</div><p>No bookings yet.<br/>Book your first porter — 30 seconds!</p></div>`;return;}
-  el.innerHTML=bks.map(b=>`<div class="bkitem">
-    <div class="bki-top"><div class="bki-id">${b.bookingId}</div><div class="bki-st ${b.status}">${b.status}</div></div>
-    <div class="bki-route">📍 ${cut(b.pickup,22)} → 🏁 ${cut(b.drop,22)}</div>
-    <div class="bki-meta"><span>💰 ₹${b.total}</span><span>🧳 ${b.bags} bags</span><span>📏 ${typeof b.distanceKm==='number'?b.distanceKm.toFixed(2)+' km':b.distanceKm||'—'}</span>${b.assignedPorter?`<span>👤 ${b.assignedPorter.name}</span>`:''}<span>🕐 ${timeAgo(b.createdAt)}</span></div>
-  </div>`).join('');
+async function loadMyBookings() {
+  const phone = document.getElementById('ph-in').value.trim();
+  const listDiv = document.getElementById('history-list');
+
+  // Agar phone number input box mein nahi hai (ya user guest hai)
+  if(!phone) { 
+    // Local storage check karo shayad wahan ho
+    const u = getUser();
+    if(!u || !u.phone) {
+        listDiv.innerHTML = '<div style="text-align:center; padding:40px 20px; color:#888; border:1px dashed #444; border-radius:12px;">Please login to view history.<br><br><span style="font-size:2rem;">🧳</span></div>';
+        return; 
+    }
+  }
+  
+  const finalPhone = phone || getUser().phone;
+  listDiv.innerHTML = '<p style="color:#888; text-align:center; padding:20px;">Loading your history...</p>';
+
+  const r = await api('/bookings/history', { method:'POST', body:JSON.stringify({phone: finalPhone}) });
+
+  if(r.ok && r.bookings.length > 0) {
+    listDiv.innerHTML = r.bookings.map(b => `
+      <div style="background:var(--bk2); border:1px solid #333; padding:15px; border-radius:12px; margin-bottom:15px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
+          <span style="color:var(--y); font-weight:800; font-size:1.1rem;">${b.bookingId}</span>
+          <span style="font-size:0.7rem; background:#222; padding:4px 8px; border-radius:4px; text-transform:uppercase; border:1px solid #444;">${b.status.replace('_', ' ')}</span>
+        </div>
+        <div style="font-size:0.85rem; color:#aaa; margin-bottom:5px;">📍 ${b.pickup}</div>
+        <div style="font-size:0.85rem; color:#aaa; margin-bottom:10px;">🏁 ${b.drop}</div>
+        
+        ${b.bill ? `
+          <div style="border-top:1.5px dashed #444; margin-top:10px; padding-top:10px; display:flex; justify-content:space-between; font-weight:800;">
+            <span style="color:#888;">Total Paid</span>
+            <span style="color:var(--green);">₹${b.bill.totalAmount}</span>
+          </div>
+        ` : ''}
+      </div>
+    `).join('');
+  } else {
+    listDiv.innerHTML = '<div style="text-align:center; padding:40px 20px; color:#888; border:1px dashed #444; border-radius:12px;">No bookings found yet.<br><br><span style="font-size:2rem;">🧳</span></div>';
+  }
 }
 
 /* ══════════ PORTER ROSTER ══════════ */
@@ -1185,7 +1184,7 @@ function goS(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('s-'+name).classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
-  if(name==='bookings')renderBookings();
+  if(name==='bookings') loadMyBookings();
 }
 
 /* ══════════ MODAL HELPERS ══════════ */
@@ -1222,22 +1221,21 @@ async function enterStartOtp() {
   const r = await api('/booking/start', {method:'POST', body:JSON.stringify({bookingId: bid.toUpperCase(), otp})});
   if(r.ok) { toast(r.msg, 'g'); } else { toast(r.msg, 'r'); }
 }
-   /* ══════════ LIVE TRIP ANIMATION & TRACKING ══════════ */
+
+/* ══════════ LIVE TRIP ANIMATION & TRACKING ══════════ */
 let liveTrackingInterval;
 let tripStartTime;
 
 function checkStatusLoop(bid) {
-  // Purana loop band karo agar chal raha ho
   if(liveTrackingInterval) clearInterval(liveTrackingInterval);
   
-  // Har 3 second mein status check karo
   liveTrackingInterval = setInterval(async () => {
     const r = await api('/booking/status', {method:'POST', body:JSON.stringify({bookingId: bid})});
     
     if (r.ok && r.status === 'in_progress') {
-      clearInterval(liveTrackingInterval); // Checking band karo
+      clearInterval(liveTrackingInterval);
       tripStartTime = r.startedAt;
-      showLiveTripScreen(); // Animation chalu karo
+      showLiveTripScreen();
     } else if (r.ok && r.status === 'completed') {
       clearInterval(liveTrackingInterval);
       document.getElementById('assigned-dtl').innerHTML = `
@@ -1251,7 +1249,6 @@ function checkStatusLoop(bid) {
 }
 
 function showLiveTripScreen() {
-  // Bouncing Animation CSS (Agar pehle se nahi hai)
   if(!document.getElementById('bounce-css')){
     const style = document.createElement('style');
     style.id = 'bounce-css';
@@ -1259,7 +1256,6 @@ function showLiveTripScreen() {
     document.head.appendChild(style);
   }
 
-  // Screen par Bouncing Truck aur Timer dikhao
   document.getElementById('assigned-dtl').innerHTML = `
     <div style="text-align:center; padding:30px 10px; background:var(--bk3); border-radius:12px; border:1.5px solid #333; margin-bottom:15px;">
       <div style="font-size:4rem; animation: bounce 0.8s infinite alternate;">🚚</div>
@@ -1273,7 +1269,6 @@ function showLiveTripScreen() {
     </div>
   `;
 
-  // Timer update karne ka logic
   setInterval(() => {
     if(!tripStartTime) return;
     const diff = Math.floor((Date.now() - tripStartTime) / 1000);
@@ -1283,7 +1278,8 @@ function showLiveTripScreen() {
     if(timerEl) timerEl.textContent = `${m}:${s}`;
   }, 1000);
 }
-   /* ══════════ DIGITAL BILL SYSTEM ══════════ */
+
+/* ══════════ DIGITAL BILL SYSTEM ══════════ */
 async function endTrip() {
   const bid = prompt("Enter Booking ID to End Trip (e.g., LB12345):");
   if(!bid) return;
@@ -1296,7 +1292,6 @@ async function endTrip() {
   }
 }
 
-//🧾 Ola/Uber Style Bill UI
 function showDigitalBill(bill, bid) {
   const div = document.createElement('div');
   div.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;backdrop-filter:blur(5px);";
