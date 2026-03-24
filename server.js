@@ -403,6 +403,7 @@ app.post('/api/booking/accept', (req, res) => {
 /** POST /api/booking/start   ← RAPIDO OTP VERIFY
  * Body: { bookingId, otp }
  */
+
 /** POST /api/booking/end   ← END TRIP & GENERATE BILL */
 app.post('/api/booking/end', (req, res) => {
   const { bookingId } = req.body;
@@ -441,6 +442,23 @@ app.post('/api/booking/start', (req, res) => {
   saveDB();
   
   res.json({ ok: true, msg: '✅ OTP Matched! Service Started.' });
+});
+/** POST /api/porter/duty   ← PORTER DASHBOARD LOGIN */
+app.post('/api/porter/duty', (req, res) => {
+  const { phone } = req.body;
+  
+  // Porter ki current active booking dhoondho
+  const booking = DB.bookings.find(b => 
+    b.assignedPorter && 
+    b.assignedPorter.phone === phone && 
+    ['confirmed', 'in_progress'].includes(b.status)
+  );
+
+  if (!booking) {
+    return res.json({ ok: false, msg: 'No active duty found right now. Take rest! 😴' });
+  }
+  
+  res.json({ ok: true, booking });
 });
 
 /** POST /api/booking/complete
