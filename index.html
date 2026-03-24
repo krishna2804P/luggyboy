@@ -1090,6 +1090,8 @@ document.getElementById('assigned-dtl').innerHTML = `
     <div class="mrow"><span class="mk">👤 Porter</span><span class="mv y">${p.name}</span></div>
     <div class="mrow"><span class="mk">⭐ Rating</span><span class="mv">${p.rating} · ${p.trips} trips</span></div>
   `;
+   // OTP dikhane ke baad background tracking chalu karo
+  checkStatusLoop(b.bookingId);
   document.getElementById('call-btn').href=`tel:+${p.phone}`;
   document.getElementById('assigned-wa').href=r.userWaLink;
   // Notify user
@@ -1219,6 +1221,67 @@ async function enterStartOtp() {
   
   const r = await api('/booking/start', {method:'POST', body:JSON.stringify({bookingId: bid.toUpperCase(), otp})});
   if(r.ok) { toast(r.msg, 'g'); } else { toast(r.msg, 'r'); }
+}
+   /* ══════════ LIVE TRIP ANIMATION & TRACKING ══════════ */
+let liveTrackingInterval;
+let tripStartTime;
+
+function checkStatusLoop(bid) {
+  // Purana loop band karo agar chal raha ho
+  if(liveTrackingInterval) clearInterval(liveTrackingInterval);
+  
+  // Har 3 second mein status check karo
+  liveTrackingInterval = setInterval(async () => {
+    const r = await api('/booking/status', {method:'POST', body:JSON.stringify({bookingId: bid})});
+    
+    if (r.ok && r.status === 'in_progress') {
+      clearInterval(liveTrackingInterval); // Checking band karo
+      tripStartTime = r.startedAt;
+      showLiveTripScreen(); // Animation chalu karo
+    } else if (r.ok && r.status === 'completed') {
+      clearInterval(liveTrackingInterval);
+      document.getElementById('assigned-dtl').innerHTML = `
+        <div style="text-align:center; padding:30px 10px; background:rgba(34,197,94,.08); border-radius:12px; border:1px solid var(--green);">
+          <div style="font-size:3rem; margin-bottom:10px;">✅</div>
+          <h3 style="color:var(--green); margin:0; font-weight:800;">TRIP COMPLETED</h3>
+          <p style="color:#aaa; font-size:0.85rem; margin-top:5px;">Thank you for using LuggyBoy!</p>
+        </div>`;
+    }
+  }, 3000); 
+}
+
+function showLiveTripScreen() {
+  // Bouncing Animation CSS (Agar pehle se nahi hai)
+  if(!document.getElementById('bounce-css')){
+    const style = document.createElement('style');
+    style.id = 'bounce-css';
+    style.innerHTML = `@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }`;
+    document.head.appendChild(style);
+  }
+
+  // Screen par Bouncing Truck aur Timer dikhao
+  document.getElementById('assigned-dtl').innerHTML = `
+    <div style="text-align:center; padding:30px 10px; background:var(--bk3); border-radius:12px; border:1.5px solid #333; margin-bottom:15px;">
+      <div style="font-size:4rem; animation: bounce 0.8s infinite alternate;">🚚</div>
+      <h3 style="color:var(--green); margin-top:15px; font-weight:800; letter-spacing:1px; font-size:1.1rem;">LUGGAGE IN TRANSIT</h3>
+      <p style="color:#888; font-size:0.8rem; margin:5px 0 15px 0;">Your porter is heading to the drop location.</p>
+      
+      <div style="background:#000; display:inline-block; padding:10px 25px; border-radius:30px; border:1px solid #444;">
+        <span style="color:#888; font-size:0.75rem; text-transform:uppercase; margin-right:10px;">Time Elapsed</span>
+        <span id="trip-timer" style="font-size:1.5rem; font-weight:800; color:var(--y); font-family:'Syne', sans-serif;">00:00</span>
+      </div>
+    </div>
+  `;
+
+  // Timer update karne ka logic
+  setInterval(() => {
+    if(!tripStartTime) return;
+    const diff = Math.floor((Date.now() - tripStartTime) / 1000);
+    const m = String(Math.floor(diff / 60)).padStart(2, '0');
+    const s = String(diff % 60).padStart(2, '0');
+    const timerEl = document.getElementById('trip-timer');
+    if(timerEl) timerEl.textContent = `${m}:${s}`;
+  }, 1000);
 }
    /* ══════════ DIGITAL BILL SYSTEM ══════════ */
 async function endTrip() {
