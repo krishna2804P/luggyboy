@@ -370,6 +370,60 @@ app.post('/api/booking', async (req, res) => {
         console.error("Booking Error:", err);
         res.status(500).json({ ok: false, msg: 'Server error. Please try again.' });
     }
+  
+});
+
+// 🔑 1. Trip Start karna (OTP Match karke status badalna)
+app.post('/api/booking/start', async (req, res) => {
+    const { bookingId, otp } = req.body;
+    try {
+        // Database mein booking dhoondho
+        const booking = await Booking.findOne({ bookingId: bookingId.toUpperCase() });
+        
+        if (!booking) {
+            return res.status(404).json({ ok: false, msg: 'Booking not found' });
+        }
+        
+        // OTP check karo
+        if (booking.otp !== otp) {
+            return res.status(400).json({ ok: false, msg: 'Invalid OTP. Please check with customer.' });
+        }
+
+        // Status update karo
+        booking.status = 'in_progress';
+        await booking.save();
+        
+        res.json({ ok: true, msg: 'Trip Started! Drive safe.', status: 'in_progress' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ ok: false, msg: 'Server Error' });
+    }
+});
+
+// 🧾 2. Trip End karna (Final Completion aur Payment confirm)
+app.post('/api/booking/end', async (req, res) => {
+    const { bookingId } = req.body;
+    try {
+        const booking = await Booking.findOne({ bookingId: bookingId.toUpperCase() });
+        
+        if (!booking) {
+            return res.status(404).json({ ok: false, msg: 'Booking not found' });
+        }
+
+        // Status completed kar do
+        booking.status = 'completed';
+        await booking.save();
+        
+        res.json({ 
+            ok: true, 
+            msg: 'Trip Completed successfully!', 
+            fare: booking.fare,
+            bookingId: booking.bookingId
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ ok: false, msg: 'Server Error' });
+    }
 });
 
   // Apply referral discount (first booking only)
