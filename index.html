@@ -1180,6 +1180,18 @@ function toast(msg,type='g'){const t=document.getElementById('toast-el');t.textC
 function cut(s,n){return s&&s.length>n?s.substr(0,n)+'…':s||''}
 function timeAgo(ts){const d=Date.now()-ts,m=Math.floor(d/60000),h=Math.floor(m/60),dy=Math.floor(h/24);if(m<1)return'just now';if(m<60)return m+'m ago';if(h<24)return h+'h ago';return dy+'d ago';}
 function copyText(t){navigator.clipboard.writeText(t).then(()=>toast('📋 Copied!','g')).catch(()=>toast(t,'y'));}
+
+/* ══════════ RAPIDO START OTP SYSTEM ══════════ */
+async function enterStartOtp() {
+  const bid = prompt("Enter Booking ID (e.g., LB12345):");
+  if(!bid) return;
+  const otp = prompt("Enter 4-digit OTP from customer:");
+  if(!otp) return;
+  
+  const r = await api('/booking/start', {method:'POST', body:JSON.stringify({bookingId: bid.toUpperCase(), otp})});
+  if(r.ok) { toast(r.msg, 'g'); } else { toast(r.msg, 'r'); }
+}
+
 </script>
 </body>
 </html>
