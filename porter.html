@@ -23,6 +23,8 @@
     .label { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
     .val { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; }
     #duty-screen { display: none; }
+    button.map-btn { width: auto; padding: 8px 12px; background: #3b82f6; color: var(--wh); font-size: 0.8rem; border-radius: 6px; margin-left: 10px; }
+    .loc-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
   </style>
 </head>
 <body>
@@ -63,6 +65,18 @@
 </div>
 
 <script>
+  // 🗺️ Direct Google Maps App Kholne Ka Helper
+  let currentPickup = '';
+  let currentDrop = '';
+
+  function openMap(type) {
+    const address = type === 'pickup' ? currentPickup : currentDrop;
+    if(!address) return;
+    
+    // Yeh link direct phone ke Google Maps app mein location search kar lega
+    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+    window.open(mapUrl, '_blank');
+  }
   let currentBookingId = '';
 
   // Helper to call backend API
@@ -86,7 +100,8 @@
     document.getElementById('d-id').textContent = b.bookingId;
     document.getElementById('d-pickup').textContent = b.pickup;
     document.getElementById('d-drop').textContent = b.drop;
-    
+    currentPickup = b.pickup;
+    currentDrop = b.drop;
     const actionArea = document.getElementById('action-area');
     
     if(b.status === 'confirmed') {
