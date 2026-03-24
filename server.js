@@ -692,6 +692,23 @@ app.get('/api/health', (req, res) => {
     time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
   });
 });
+/* ══════════════════════════════════════════════════════════
+   MY BOOKINGS
+══════════════════════════════════════════════════════════ */
+
+/** POST /api/bookings/history   ← CUSTOMER MY BOOKINGS */
+app.post('/api/bookings/history', (req, res) => {
+  const { phone } = req.body;
+  if (!phone) return res.status(400).json({ ok: false, msg: 'Phone required' });
+
+  // Sirf is customer ki bookings filter karo
+  const myBookings = DB.bookings.filter(b => b.customerPhone === phone);
+  
+  // Sabse nayi booking sabse upar dikhane ke liye reverse karo
+  myBookings.reverse();
+
+  res.json({ ok: true, bookings: myBookings });
+});
 
 /* ══════════════════════════════════════════════════════════
    START SERVER
