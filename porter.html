@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Porter Partner - LuggyBoy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --bk: #0f0f0f; --bk2: #1a1a1a; --y: #facc15; --wh: #ffffff; --green: #22c55e; }
+    body { margin: 0; padding: 0; background: var(--bk); color: var(--wh); font-family: 'Syne', sans-serif; display: flex; justify-content: center; }
+    .app { width: 100%; max-width: 400px; min-height: 100vh; padding: 20px; box-sizing: border-box; }
+    .header { text-align: center; padding: 20px 0; border-bottom: 1px dashed #333; margin-bottom: 20px; }
+    .header h1 { color: var(--y); margin: 0; font-size: 1.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; }
+    .header p { margin: 5px 0 0; font-size: 0.8rem; color: #888; }
+    
+    .card { background: var(--bk2); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 20px; }
+    input { width: 100%; padding: 15px; background: var(--bk); border: 1.5px solid #333; color: var(--wh); border-radius: 8px; font-size: 1rem; margin-bottom: 15px; box-sizing: border-box; outline: none; font-family: 'Syne', sans-serif; }
+    input:focus { border-color: var(--y); }
+    button { width: 100%; padding: 15px; background: var(--y); color: #000; border: none; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; text-transform: uppercase; }
+    button.green { background: var(--green); color: var(--wh); }
+    button.red { background: #ef4444; color: var(--wh); }
+    
+    .label { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
+    .val { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; }
+    #duty-screen { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <h1>LUGGY BOY</h1>
+    <p>PORTER PARTNER DASHBOARD</p>
+  </div>
+
+  <div id="login-screen" class="card">
+    <div class="label">Enter Your Registered Mobile No.</div>
+    <input type="tel" id="p-phone" placeholder="e.g. 9876543210" maxlength="10">
+    <button onclick="checkDuty()">Get My Duty 🚀</button>
+  </div>
+
+  <div id="duty-screen" class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:15px;">
+      <span style="background:rgba(250,204,21,0.2); color:var(--y); padding:5px 10px; border-radius:4px; font-weight:800; font-size:0.8rem;" id="d-id">LBXXXX</span>
+      <span id="d-status" style="font-size:0.8rem; font-weight:600; color:#888;">STATUS</span>
+    </div>
+    
+ <div class="label">📍 Pickup From</div>
+    <div class="loc-row">
+      <div class="val" id="d-pickup" style="margin-bottom:0;">...</div>
+      <button class="map-btn" id="nav-pickup" onclick="openMap('pickup')">🧭 MAP</button>
+    </div>
+    
+    <div class="label">🏁 Drop To</div>
+    <div class="loc-row">
+      <div class="val" id="d-drop" style="margin-bottom:0;">...</div>
+      <button class="map-btn" id="nav-drop" onclick="openMap('drop')">🧭 MAP</button>
+    </div>
+
+    <div id="action-area" style="margin-top: 25px;">
+      </div>
+  </div>
+</div>
+
+<script>
+  let currentBookingId = '';
+
+  // Helper to call backend API
+  async function api(path, options={}) {
+    options.headers = { 'Content-Type': 'application/json' };
+    try { const r = await fetch('/api' + path, options); return await r.json(); } 
+    catch(e) { return { ok: false, msg: 'Network Error' }; }
+  }
+
+  // Check Duty
+  async function checkDuty() {
+    const phone = document.getElementById('p-phone').value.trim();
+    if(phone.length !== 10) return alert('Enter valid 10-digit number');
+    
+    const r = await api('/porter/duty', { method: 'POST', body: JSON.stringify({phone}) });
+    if(!r.ok) return alert(r.msg);
+
+    // Populate Duty Screen
+    const b = r.booking;
+    currentBookingId = b.bookingId;
+    document.getElementById('d-id').textContent = b.bookingId;
+    document.getElementById('d-pickup').textContent = b.pickup;
+    document.getElementById('d-drop').textContent = b.drop;
+    
+    const actionArea = document.getElementById('action-area');
+    
+    if(b.status === 'confirmed') {
+      document.getElementById('d-status').textContent = 'WAITING FOR OTP';
+      actionArea.innerHTML = `
+        <input type="tel" id="c-otp" placeholder="Enter 4-Digit Customer OTP" maxlength="4" style="text-align:center; font-size:1.5rem; letter-spacing:5px;">
+        <button class="green" onclick="startTrip()">Start Service ✅</button>
+      `;
+    } else if (b.status === 'in_progress') {
+      document.getElementById('d-status').textContent = 'SERVICE IN PROGRESS';
+      document.getElementById('d-status').style.color = 'var(--green)';
+      actionArea.innerHTML = `
+        <button class="red" onclick="endTrip()">End Trip & Generate Bill 🧾</button>
+      `;
+    }
+
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('duty-screen').style.display = 'block';
+  }
+
+  // Start Trip Logic
+  async function startTrip() {
+    const otp = document.getElementById('c-otp').value.trim();
+    if(otp.length !== 4) return alert('Enter 4 digit OTP');
+    
+    const r = await api('/booking/start', { method: 'POST', body: JSON.stringify({ bookingId: currentBookingId, otp }) });
+    if(r.ok) { alert('Service Started!'); checkDuty(); } 
+    else { alert(r.msg); }
+  }
+
+  // End Trip Logic
+  async function endTrip() {
+    const r = await api('/booking/end', { method: 'POST', body: JSON.stringify({ bookingId: currentBookingId }) });
+    if(r.ok) { 
+      alert(`Trip Ended! Total Bill: ₹${r.bill.totalAmount}. Ask customer to pay.`); 
+      location.reload(); 
+    } else { alert(r.msg); }
+  }
+</script>
+</body>
+</html>
