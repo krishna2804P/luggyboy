@@ -33,6 +33,33 @@ const { v4: uuidv4 } = require('uuid');
 const fs        = require('fs');
 const path      = require('path');
 
+const mongoose = require('mongoose');
+
+// Aapka connection string (Luggy123 password ke saath)
+const mongoURI = "mongodb+srv://luggyadmin:Luggy123@cluster0.n6uatcs.mongodb.net/luggyboy?retryWrites=true&w=majority&appName=Cluster0";
+
+mongoose.connect(mongoURI)
+  .then(() => console.log("✅ MongoDB Connected Successfully!"))
+  .catch(err => console.error("❌ Connection Error:", err));
+
+const bookingSchema = new mongoose.Schema({
+  bookingId: { type: String, required: true, unique: true },
+  customerPhone: { type: String, required: true },
+  pickup: String,
+  drop: String,
+  bags: { type: Number, default: 1 },
+  fare: Number,
+  status: { 
+    type: String, 
+    enum: ['pending', 'confirmed', 'in_progress', 'completed'], 
+    default: 'pending' 
+  },
+  otp: String,
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Booking = mongoose.model('Booking', bookingSchema);
+
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
@@ -150,7 +177,7 @@ function getOrCreateUser(phone) {
 }
 
 function getUserBookings(phone) {
-  return DB.bookings.filter(b => b.userPhone === phone);
+  return Booking.find(b => b.userPhone === phone);
 }
 
 /* ═══════════════════════════════════════
@@ -244,44 +271,72 @@ app.post('/api/coupon/validate', (req, res) => {
 /** POST /api/booking
  *  Body: { userPhone, pickup, drop, pickupLat, pickupLng, dropLat, dropLng, bags, luggageType, distanceKm, couponCode, referralCode }
  */
-app.post('/api/booking', (req, res) => {
+// 1. Function ke aage 'async' lagaya taaki MongoDB ka wait kar sakein
+app.post('/api/booking', async (req, res) => {
   const { userPhone, pickup, drop, pickupLat, pickupLng, dropLat, dropLng, bags, luggageType, distanceKm, couponCode, referralCode } = req.body;
 
-  // ── Validation ──
+  // ── Validation (Wahi rahega) ──
   if (!userPhone) return res.status(400).json({ ok: false, msg: 'Login required' });
   if (!pickup || !drop) return res.status(400).json({ ok: false, msg: 'Pickup and drop required' });
   if (!dropLat) return res.status(400).json({ ok: false, msg: 'Select drop location on map' });
 
-  // ── Fraud: max 2 bookings per minute ──
-  const recentBookings = DB.bookings.filter(b => b.userPhone === userPhone && (Date.now() - b.createdAt) < 60000);
-  if (recentBookings.length >= 2) return res.status(429).json({ ok: false, msg: 'Too many bookings. Wait 1 minute.' });
+  try {
+    // ── Fraud Check: MongoDB mein count karenge ──
+    const oneMinAgo = new Date(Date.now() - 60000);
+    const recentCount = await Booking.countDocuments({ 
+      customerPhone: userPhone, 
+      createdAt: { $gt: oneMinAgo } 
+    });
+    if (recentCount >= 2) return res.status(429).json({ ok: false, msg: 'Wait 1 minute before next booking.' });
 
-  // ── Duplicate: same user with pending booking ──
-  const pending = DB.bookings.find(b => b.userPhone === userPhone && b.status === 'pending');
-  if (pending) return res.status(400).json({ ok: false, msg: `You already have an active booking: ${pending.bookingId}` });
+    // ── Duplicate Check: Kya koi 'pending' booking hai? ──
+    const pending = await Booking.findOne({ customerPhone: userPhone, status: 'pending' });
+    if (pending) return res.status(400).json({ ok: false, msg: `Active booking: ${pending.bookingId}` });
 
-  // ── Price calculation ──
-  const dist   = parseFloat(distanceKm) || 0;
-  const bagsN  = parseInt(bags) || 1;
-  const heavy  = luggageType === 'heavy' ? 20 : 0;
-  const base   = 50;
-  const distCost = Math.round(dist * 20);
-  const bagCost  = bagsN * 10;
-  let   gross    = base + distCost + bagCost + heavy;
-  let   discount = 0;
+    // ── Price Calculation (Aapka logic wahi rahega) ──
+    const dist = parseFloat(distanceKm) || 0;
+    const bagsN = parseInt(bags) || 1;
+    const heavy = luggageType === 'heavy' ? 20 : 0;
+    const base = 50;
+    const distCost = Math.round(dist * 20);
+    const bagCost = bagsN * 10;
+    let gross = base + distCost + bagCost + heavy;
+    let discount = 0;
 
-  // Apply coupon
-  if (couponCode) {
-    const c = COUPONS[couponCode.toUpperCase()];
-    const used = DB.couponUsage[userPhone] || [];
-    if (c && !used.includes(couponCode.toUpperCase())) {
-      if (!c.firstBookingOnly || getUserBookings(userPhone).length === 0) {
-        discount = c.off;
-        if (!DB.couponUsage[userPhone]) DB.couponUsage[userPhone] = [];
-        DB.couponUsage[userPhone].push(couponCode.toUpperCase());
-      }
-    }
+    // TODO: Coupon logic ko MongoDB ke hisab se baad mein set karenge
+    // Abhi ke liye seedha SAVE karte hain
+
+    // ── Naya Booking ID banana ──
+    const bId = 'LB' + Math.floor(1000 + Math.random() * 9000);
+
+    // ── MongoDB mein SAVE karna ──
+    const newBooking = new Booking({
+      bookingId: bId,
+      customerPhone: userPhone,
+      pickup: pickup,
+      drop: drop,
+      bags: bagsN,
+      fare: gross - discount,
+      status: 'pending',
+      otp: Math.floor(1000 + Math.random() * 9000).toString() // 4 digit OTP
+    });
+
+    const savedBooking = await newBooking.save();
+
+    // ── Response bhejna ──
+    res.json({ 
+      ok: true, 
+      msg: 'Booking Dispatched!', 
+      booking: savedBooking,
+      // Abhi ke liye dummy porters link (baad mein isey update karenge)
+      waLinks: [{ porterName: "Ravi (Auto)", waLink: `https://wa.me/91XXXXXXXXXX?text=NewBooking-${bId}` }] 
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, msg: 'Server error while booking' });
   }
+});
 
   // Apply referral discount (first booking only)
   if (referralCode && getUserBookings(userPhone).length === 0) {
@@ -702,7 +757,7 @@ app.post('/api/bookings/history', (req, res) => {
   if (!phone) return res.status(400).json({ ok: false, msg: 'Phone required' });
 
   // Sirf is customer ki bookings filter karo
-  const myBookings = DB.bookings.filter(b => b.customerPhone === phone);
+  const myBookings = Booking.find(b => b.customerPhone === phone);
   
   // Sabse nayi booking sabse upar dikhane ke liye reverse karo
   myBookings.reverse();
