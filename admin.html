@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Control Room - LuggyBoy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --bk: #0f0f0f; --bk2: #1a1a1a; --y: #facc15; --wh: #ffffff; --green: #22c55e; }
+    body { margin: 0; padding: 20px; background: var(--bk); color: var(--wh); font-family: 'Syne', sans-serif; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #333; padding-bottom: 20px; margin-bottom: 20px; }
+    .header h1 { color: var(--y); margin: 0; font-size: 1.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; }
+    
+    /* Stats Cards */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+    .stat-card { background: var(--bk2); padding: 20px; border-radius: 12px; border: 1px solid #333; text-align: center; }
+    .stat-card h3 { margin: 0; font-size: 0.9rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-card .val { font-size: 2.5rem; font-weight: 800; color: var(--wh); margin-top: 10px; }
+    .stat-card .val.green { color: var(--green); }
+    .stat-card .val.yellow { color: var(--y); }
+
+    /* Bookings List */
+    h2 { font-size: 1.2rem; color: #aaa; margin-bottom: 15px; text-transform: uppercase; }
+    .b-card { background: var(--bk2); padding: 15px; border-radius: 8px; border-left: 4px solid #444; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+    .b-card.pending { border-left-color: #ef4444; } /* Red for pending */
+    .b-card.in_progress { border-left-color: var(--y); } /* Yellow for running */
+    
+    .b-info { font-size: 0.9rem; }
+    .b-id { font-weight: 800; color: var(--y); margin-bottom: 5px; font-size: 1.1rem; }
+    .b-loc { color: #aaa; margin-top: 5px; font-size: 0.8rem; }
+    .b-status { padding: 5px 10px; background: #333; border-radius: 4px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>CONTROL ROOM</h1>
+    <button onclick="loadDashboard()" style="padding:10px 15px; background:var(--bk2); color:var(--wh); border:1px solid #333; border-radius:6px; cursor:pointer;">🔄 Refresh</button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <h3>Total Revenue</h3>
+      <div class="val green" id="s-rev">₹0</div>
+    </div>
+    <div class="stat-card">
+      <h3>Active Trips</h3>
+      <div class="val yellow" id="s-active">0</div>
+    </div>
+    <div class="stat-card">
+      <h3>Total Bookings</h3>
+      <div class="val" id="s-total">0</div>
+    </div>
+  </div>
+
+  <h2>🚨 Live & Pending Bookings</h2>
+  <div id="bookings-list">
+    <p style="color:#888;">Loading data...</p>
+  </div>
+
+  <script>
+    async function loadDashboard() {
+      try {
+        const res = await fetch('/api/admin/dashboard');
+        const data = await res.json();
+        
+        if(data.ok) {
+          // Stats Update
+          document.getElementById('s-rev').textContent = '₹' + data.stats.revenue;
+          document.getElementById('s-active').textContent = data.stats.activeCount;
+          document.getElementById('s-total').textContent = data.stats.totalBookings;
+
+          // Bookings List Update
+          const listDiv = document.getElementById('bookings-list');
+          if(data.activeBookings.length === 0) {
+            listDiv.innerHTML = '<p style="color:#888;">No active bookings right now.</p>';
+            return;
+          }
+
+          listDiv.innerHTML = data.activeBookings.map(b => `
+            <div class="b-card ${b.status}">
+              <div class="b-info">
+                <div class="b-id">${b.bookingId}</div>
+                <div>Customer: ${b.customerPhone}</div>
+                <div class="b-loc">📍 ${b.pickup} <br> 🏁 ${b.drop}</div>
+              </div>
+              <div class="b-status">${b.status.replace('_', ' ')}</div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        document.getElementById('bookings-list').innerHTML = '<p style="color:red;">Error loading data. Is server running?</p>';
+      }
+    }
+
+    // Load immediately when page opens
+    loadDashboard();
+    // Auto-refresh every 10 seconds
+    setInterval(loadDashboard, 10000);
+  </script>
+</body>
+</html>
