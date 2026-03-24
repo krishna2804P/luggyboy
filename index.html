@@ -476,13 +476,17 @@ footer{background:var(--bk2);border-top:1px solid #131313;padding:38px 5% 20px}
   </div>
   <div id="sb-prof"></div>
   <div class="sb-nav">
-     <button class="sbi" onclick="closeSB();enterStartOtp()"><div class="sbi-ico">🔑</div><div><div class="sbi-lbl">Start Service</div><div class="sbi-sub">Enter Customer OTP</div></div></button>
-    <button class="sbi" onclick="closeSB();goS('main')"><div class="sbi-ico">🏠</div><div><div class="sbi-lbl">Home</div><div class="sbi-sub">Book a porter</div></div></button>
-    <button class="sbi" onclick="closeSB();goS('bookings')"><div class="sbi-ico">📋</div><div><div class="sbi-lbl">My Bookings</div><div class="sbi-sub">History & status</div></div><span class="sbi-badge" id="sb-cnt">0</span></button>
-    <button class="sbi" onclick="closeSB();document.getElementById('join').scrollIntoView({behavior:'smooth'})"><div class="sbi-ico">🧑‍💼</div><div><div class="sbi-lbl">Become a Porter</div><div class="sbi-sub">Earn ₹600–1200/day</div></div></button>
-    <button class="sbi" onclick="closeSB();openModal('referModal')"><div class="sbi-ico">🎁</div><div><div class="sbi-lbl">Refer & Earn</div><div class="sbi-sub">₹20 per referral</div></div></button>
-    <button class="sbi" onclick="closeSB();window.open('https://wa.me/'+CFG.ADMIN_WA,'_blank')"><div class="sbi-ico">💬</div><div><div class="sbi-lbl">Support</div><div class="sbi-sub">WhatsApp — 2 min reply</div></div></button>
-    <button class="sbi" onclick="closeSB();openAssignModal()"><div class="sbi-ico">⚡</div><div><div class="sbi-lbl">Assign Porter</div><div class="sbi-sub">After porter replies YES</div></div></button>
+<button class="sbi" onclick="closeSB();goS('main')"><div class="sbi-ico">🏠</div><div><div class="sbi-lbl">Home</div><div class="sbi-sub">Book a porter</div></div></button>
+  <button class="sbi" onclick="closeSB();goS('bookings')"><div class="sbi-ico">📋</div><div><div class="sbi-lbl">My Bookings</div><div class="sbi-sub">History & status</div></div><span class="sbi-badge" id="sb-cnt">0</span></button>
+  <button class="sbi" onclick="closeSB();openModal('referModal')"><div class="sbi-ico">🎁</div><div><div class="sbi-lbl">Refer & Earn</div><div class="sbi-sub">₹20 per referral</div></div></button>
+  <button class="sbi" onclick="closeSB();window.open('https://wa.me/'+CFG.ADMIN_WA,'_blank')"><div class="sbi-ico">💬</div><div><div class="sbi-lbl">Support</div><div class="sbi-sub">WhatsApp — 2 min reply</div></div></button>
+  <button class="sbi" onclick="closeSB();document.getElementById('join').scrollIntoView({behavior:'smooth'})"><div class="sbi-ico">🧑‍💼</div><div><div class="sbi-lbl">Become a Porter</div><div class="sbi-sub">Earn ₹600–1200/day</div></div></button>
+
+  <div style="border-top: 1.5px dashed #333; margin: 10px 15px;"></div>
+
+  <button class="sbi" onclick="closeSB();openAssignModal()"><div class="sbi-ico">⚡</div><div><div class="sbi-lbl">Assign Porter</div><div class="sbi-sub">Admin Action</div></div></button>
+  <button class="sbi" onclick="closeSB();enterStartOtp()"><div class="sbi-ico">🔑</div><div><div class="sbi-lbl">Start Service</div><div class="sbi-sub">Enter Customer OTP</div></div></button>
+  <button class="sbi" onclick="closeSB();endTrip()"><div class="sbi-ico">🧾</div><div><div class="sbi-lbl">End Trip</div><div class="sbi-sub">Generate Final Bill</div></div></button>
   </div>
   <div class="sb-foot"><button class="btn-logout" id="sb-logout" onclick="logout()">Sign Out</button></div>
 </div>
