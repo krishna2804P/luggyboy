@@ -80,6 +80,32 @@ function saveDB() {
   try { fs.writeFileSync(DB_FILE, JSON.stringify(DB, null, 2)); } 
   catch(e) { console.error('DB save error:', e.message); }
 }
+/** GET /api/admin/dashboard   ← ADMIN CONTROL ROOM DATA */
+app.get('/api/admin/dashboard', (req, res) => {
+  const bookings = DB.bookings || [];
+  
+  // Bookings ko alag-alag categories mein baanto
+  const activeBookings = bookings.filter(b => ['pending', 'confirmed', 'in_progress'].includes(b.status));
+  const completedBookings = bookings.filter(b => b.status === 'completed');
+
+  // Total Revenue (Kamayi) Calculate karo
+  let totalRevenue = 0;
+  completedBookings.forEach(b => {
+    if (b.bill && b.bill.totalAmount) {
+      totalRevenue += b.bill.totalAmount;
+    }
+  });
+
+  res.json({
+    ok: true,
+    stats: {
+      totalBookings: bookings.length,
+      activeCount: activeBookings.length,
+      revenue: totalRevenue
+    },
+    activeBookings: activeBookings.reverse() // Nayi booking sabse upar dikhegi
+  });
+});
 
 /* ═══════════════════════════════════════
    COUPONS CONFIG
