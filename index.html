@@ -1216,6 +1216,53 @@ async function enterStartOtp() {
   const r = await api('/booking/start', {method:'POST', body:JSON.stringify({bookingId: bid.toUpperCase(), otp})});
   if(r.ok) { toast(r.msg, 'g'); } else { toast(r.msg, 'r'); }
 }
+   /* ══════════ DIGITAL BILL SYSTEM ══════════ */
+async function endTrip() {
+  const bid = prompt("Enter Booking ID to End Trip (e.g., LB12345):");
+  if(!bid) return;
+
+  const r = await api('/booking/end', {method:'POST', body:JSON.stringify({bookingId: bid.toUpperCase()})});
+  if(r.ok) {
+    showDigitalBill(r.bill, bid.toUpperCase());
+  } else {
+    toast(r.msg, 'r');
+  }
+}
+
+//🧾 Ola/Uber Style Bill UI
+function showDigitalBill(bill, bid) {
+  const div = document.createElement('div');
+  div.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;backdrop-filter:blur(5px);";
+  
+  div.innerHTML = `
+    <div style="background:#1a1a1a; width:100%; max-width:350px; border-radius:16px; overflow:hidden; border:1.5px solid #333; font-family:'Syne', sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <div style="background:var(--y); padding:20px; text-align:center; color:#000;">
+        <h2 style="margin:0; font-size:1.6rem; font-weight:800; letter-spacing:1px;">LUGGY BOY</h2>
+        <div style="font-size:0.75rem; font-weight:700; opacity:0.8; margin-top:5px;">DIGITAL RECEIPT • ${bid}</div>
+      </div>
+      <div style="padding:25px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px; color:#aaa; font-size:0.95rem;">
+          <span>Time (${bill.durationMins} mins)</span>
+          <span style="color:var(--wh); font-weight:600;">₹${bill.timeCharge}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px; color:#aaa; font-size:0.95rem;">
+          <span>Base Fare</span>
+          <span style="color:var(--wh); font-weight:600;">₹${bill.baseFare}</span>
+        </div>
+        
+        <div style="border-top:1.5px dashed #444; margin:20px 0;"></div>
+        
+        <div style="display:flex; justify-content:space-between; font-weight:800; font-size:1.5rem; color:var(--wh); margin-bottom:25px;">
+          <span>Total To Pay</span>
+          <span style="color:#22c55e;">₹${bill.totalAmount}</span>
+        </div>
+        
+        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="width:100%; padding:15px; background:var(--bk3); color:var(--wh); border:1px solid #444; border-radius:8px; font-weight:700; font-size:1rem; cursor:pointer; text-transform:uppercase;">Pay & Close</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(div);
+}
 
 </script>
 </body>
