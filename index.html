@@ -121,9 +121,34 @@ nav{position:fixed;top:0;inset-inline:0;z-index:300;display:flex;align-items:cen
 .lfi:focus{border-color:var(--y);background:#14120a}
 .lfi::placeholder{color:#383838;letter-spacing:0}
 .lf-hint{font-size:.72rem;color:#555;margin-top:5px;font-weight:300}
-.otp-row{display:flex;gap:9px;margin-bottom:5px}
-.obox{width:55px;height:60px;background:var(--bk3);border:1.5px solid #252525;border-radius:var(--r2);color:var(--wh);font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;text-align:center;outline:none;transition:border-color .2s;caret-color:var(--y);padding:0;}
-.obox:focus{border-color:var(--y);background:#14120a}
+.otp-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px; /* Boxes ke beech thoda gap */
+    margin: 20px 0;
+}
+
+.obox {
+    width: 45px; /* 6 boxes ke hisaab se perfect width */
+    height: 50px; /* Thodi height bhi adjust ki hai */
+    background: var(--bk3);
+    border: 1.5px solid #252525;
+    border-radius: var(--r2);
+    color: var(--wh);
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    text-align: center;
+    outline: none;
+    transition: border-color .2s;
+    caret-color: var(--y);
+    padding: 0;
+    flex-shrink: 0; /* Box ko pichakne se rokega */
+}
+
+.obox:focus {
+    border-color: var(--y);
+}
 .otp-resend{font-size:.73rem;color:#555;text-align:right;margin-top:5px}
 .otp-resend button{background:none;border:none;color:var(--y);cursor:pointer;font-family:'Outfit',sans-serif;font-size:.73rem;font-weight:600}
 .btn-full{width:100%;background:var(--y);color:var(--bk);font-family:'Syne',sans-serif;font-size:.98rem;font-weight:800;letter-spacing:.8px;padding:14px;border:none;border-radius:var(--r2);cursor:pointer;margin-top:15px;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
