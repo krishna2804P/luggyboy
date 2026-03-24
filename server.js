@@ -272,70 +272,104 @@ app.post('/api/coupon/validate', (req, res) => {
  *  Body: { userPhone, pickup, drop, pickupLat, pickupLng, dropLat, dropLng, bags, luggageType, distanceKm, couponCode, referralCode }
  */
 // 1. Function ke aage 'async' lagaya taaki MongoDB ka wait kar sakein
+// 🚀 FINAL PROFESSIONAL BOOKING API (MongoDB + Coupon + Fraud Check)
 app.post('/api/booking', async (req, res) => {
-  const { userPhone, pickup, drop, pickupLat, pickupLng, dropLat, dropLng, bags, luggageType, distanceKm, couponCode, referralCode } = req.body;
+    try {
+        const { 
+            userPhone, pickup, drop, bags, luggageType, 
+            distanceKm, couponCode, referralCode, dropLat 
+        } = req.body;
 
-  // ── Validation (Wahi rahega) ──
-  if (!userPhone) return res.status(400).json({ ok: false, msg: 'Login required' });
-  if (!pickup || !drop) return res.status(400).json({ ok: false, msg: 'Pickup and drop required' });
-  if (!dropLat) return res.status(400).json({ ok: false, msg: 'Select drop location on map' });
+        // 1. Basic Validation
+        if (!userPhone) return res.status(400).json({ ok: false, msg: 'Login required' });
+        if (!pickup || !drop) return res.status(400).json({ ok: false, msg: 'Pickup and drop required' });
+        if (!dropLat) return res.status(400).json({ ok: false, msg: 'Select drop location on map' });
 
-  try {
-    // ── Fraud Check: MongoDB mein count karenge ──
-    const oneMinAgo = new Date(Date.now() - 60000);
-    const recentCount = await Booking.countDocuments({ 
-      customerPhone: userPhone, 
-      createdAt: { $gt: oneMinAgo } 
-    });
-    if (recentCount >= 2) return res.status(429).json({ ok: false, msg: 'Wait 1 minute before next booking.' });
+        // 2. Fraud Check (Max 2 bookings per minute)
+        const oneMinAgo = new Date(Date.now() - 60000);
+        const recentCount = await Booking.countDocuments({ 
+            customerPhone: userPhone, 
+            createdAt: { $gt: oneMinAgo } 
+        });
+        if (recentCount >= 2) return res.status(429).json({ ok: false, msg: 'Wait 1 minute before next booking.' });
 
-    // ── Duplicate Check: Kya koi 'pending' booking hai? ──
-    const pending = await Booking.findOne({ customerPhone: userPhone, status: 'pending' });
-    if (pending) return res.status(400).json({ ok: false, msg: `Active booking: ${pending.bookingId}` });
+        // 3. Duplicate Check (Already pending booking)
+        const pending = await Booking.findOne({ customerPhone: userPhone, status: 'pending' });
+        if (pending) return res.status(400).json({ ok: false, msg: `Active booking: ${pending.bookingId}` });
 
-    // ── Price Calculation (Aapka logic wahi rahega) ──
-    const dist = parseFloat(distanceKm) || 0;
-    const bagsN = parseInt(bags) || 1;
-    const heavy = luggageType === 'heavy' ? 20 : 0;
-    const base = 50;
-    const distCost = Math.round(dist * 20);
-    const bagCost = bagsN * 10;
-    let gross = base + distCost + bagCost + heavy;
-    let discount = 0;
+        // 4. Price Calculation
+        const dist = parseFloat(distanceKm) || 0;
+        const bagsN = parseInt(bags) || 1;
+        const heavy = luggageType === 'heavy' ? 20 : 0;
+        const base = 50;
+        const distCost = Math.round(dist * 20);
+        const bagCost = bagsN * 10;
+        let gross = base + distCost + bagCost + heavy;
+        let discount = 0;
 
-    // TODO: Coupon logic ko MongoDB ke hisab se baad mein set karenge
-    // Abhi ke liye seedha SAVE karte hain
+        // 5. 🎟️ Professional Coupon Logic (One-time use)
+        if (couponCode) {
+            const codeUpper = couponCode.toUpperCase();
+            
+            // Check: Kya ye coupon pehle kabhi 'completed' booking mein use hua hai?
+            const alreadyUsed = await Booking.findOne({ 
+                customerPhone: userPhone, 
+                couponCode: codeUpper,
+                status: 'completed' 
+            });
 
-    // ── Naya Booking ID banana ──
-    const bId = 'LB' + Math.floor(1000 + Math.random() * 9000);
+            if (alreadyUsed) {
+                return res.status(400).json({ ok: false, msg: `Coupon ${codeUpper} can only be used once!` });
+            }
 
-    // ── MongoDB mein SAVE karna ──
-    const newBooking = new Booking({
-      bookingId: bId,
-      customerPhone: userPhone,
-      pickup: pickup,
-      drop: drop,
-      bags: bagsN,
-      fare: gross - discount,
-      status: 'pending',
-      otp: Math.floor(1000 + Math.random() * 9000).toString() // 4 digit OTP
-    });
+            // Super50 sirf Referral ke baad
+            if (codeUpper === 'SUPER50') {
+                const referralDone = await Booking.findOne({ 
+                    customerPhone: userPhone, 
+                    referralCode: { $exists: true }, 
+                    status: 'completed' 
+                });
+                if (!referralDone) {
+                    return res.status(400).json({ ok: false, msg: 'SUPER50 is only for users who completed a referral!' });
+                }
+                discount = 50;
+            } else if (codeUpper === 'FIRST50') {
+                discount = 30; // Example for other coupons
+            }
+        }
 
-    const savedBooking = await newBooking.save();
+        // 6. Naya Booking ID aur OTP
+        const bId = 'LB' + Math.floor(1000 + Math.random() * 9000);
+        const finalFare = Math.max(30, gross - discount);
 
-    // ── Response bhejna ──
-    res.json({ 
-      ok: true, 
-      msg: 'Booking Dispatched!', 
-      booking: savedBooking,
-      // Abhi ke liye dummy porters link (baad mein isey update karenge)
-      waLinks: [{ porterName: "Ravi (Auto)", waLink: `https://wa.me/91XXXXXXXXXX?text=NewBooking-${bId}` }] 
-    });
+        // 7. MongoDB mein Save
+        const newBooking = new Booking({
+            bookingId: bId,
+            customerPhone: userPhone,
+            pickup: pickup,
+            drop: drop,
+            bags: bagsN,
+            fare: finalFare,
+            couponCode: couponCode ? couponCode.toUpperCase() : null,
+            referralCode: referralCode || null,
+            status: 'pending',
+            otp: Math.floor(1000 + Math.random() * 9000).toString()
+        });
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ ok: false, msg: 'Server error while booking' });
-  }
+        const savedBooking = await newBooking.save();
+
+        // 8. Success Response
+        res.json({ 
+            ok: true, 
+            msg: 'Booking Dispatched!', 
+            booking: savedBooking,
+            waLinks: [{ porterName: "Ravi (Porter)", waLink: `https://wa.me/916267293870?text=NewBooking-${bId}` }] 
+        });
+
+    } catch (err) {
+        console.error("Booking Error:", err);
+        res.status(500).json({ ok: false, msg: 'Server error. Please try again.' });
+    }
 });
 
   // Apply referral discount (first booking only)
