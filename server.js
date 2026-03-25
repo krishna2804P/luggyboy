@@ -243,47 +243,174 @@ app.post('/api/booking', (req, res) => {
   res.json({ ok: true, booking, waLinks, activeCount: activePorters.length });
 });
 
-/* ══════════════════════════════════════════════════════════
-   6. ACCEPT BOOKING (LOCK — first come first serve)
-══════════════════════════════════════════════════════════ */
-app.post('/api/booking/accept', (req, res) => {
-  const { bookingId, porterId } = req.body;
-  const booking = DB.bookings.find(b => b.bookingId === bookingId);
-  const porter  = DB.porters.find(p => p.id === porterId);
+/**
+ * ╔════════════════════════════════════════════════════════════════════════╗
+ * ║                  LUGGYBOY MASTER BACKEND — server.js                   ║
+ * ║     FIRST-COME-FIRST-SERVE LOGIC | 100% LOCAL JSON DATABASE            ║
+ * ╚════════════════════════════════════════════════════════════════════════╝
+ */
 
-  if (!booking) return res.status(404).json({ ok: false, msg: 'Booking not found' });
-  if (!porter)  return res.status(404).json({ ok: false, msg: 'Porter not found' });
-  if (booking.assignedPorter)
-    return res.status(409).json({ ok: false, msg: 'Booking already assigned to another porter' });
-  if (booking.status !== 'pending')
-    return res.status(400).json({ ok: false, msg: `Booking is ${booking.status}` });
+const express = require('express');
+const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
-  // Rapido-style start OTP
-  booking.startOtp      = Math.floor(1000 + Math.random() * 9000).toString();
-  booking.status         = 'confirmed';
-  booking.assignedPorter = { id: porter.id, name: porter.name, phone: porter.phone, rating: porter.rating, trips: porter.trips };
-  saveDB();
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-  console.log(`\n✅ Booking ${bookingId} → Assigned to ${porter.name} (OTP: ${booking.startOtp})\n`);
+app.use(cors());
+app.use(express.json());
+app.use(express.static('.'));
 
-  const userMsg = encodeURIComponent(
-    `✅ *LuggyBoy — Porter On the Way!*\n` +
-    `━━━━━━━━━━━━━━━━━━\n` +
-    `🔖 Booking: *${bookingId}*\n` +
-    `👤 Porter: *${porter.name}*\n📍 ${porter.area}\n⭐ ${porter.rating}\n📞 +${porter.phone}\n` +
-    `━━━━━━━━━━━━━━━━━━\n` +
-    `⏱️ ETA: ${booking.eta}–${booking.eta+3} min\n💰 Total: ₹${booking.total}\n` +
-    `━━━━━━━━━━━━━━━━━━\n_Thank you for using LuggyBoy!_`
-  );
+const DB_FILE = path.join(__dirname, 'db.json');
 
-  res.json({
-    ok         : true,
-    booking,
-    porter,
-    userWaLink : `https://wa.me/${booking.customerPhone}?text=${userMsg}`,
-  });
+function getDefaultDB() {
+    return {
+        users: [], otps: {},
+        porters: [
+            { id: 'P01', name: 'Ravi Kumar', phone: '916267293870', area: 'Indore Junction', rating: 4.9, active: true, emoji: '👨‍💼', trips: 820 },
+            { id: 'P02', name: 'Suresh Patel', phone: '919222222222', area: 'Indore Airport', rating: 4.8, active: true, emoji: '🧑‍💼', trips: 640 },
+            { id: 'P03', name: 'Mahesh Yadav', phone: '919333333333', area: 'Sarwate Stand', rating: 4.7, active: true, emoji: '👷', trips: 510 }
+        ],
+        bookings: [], coupons: { 'FIRST50': 30, 'LUGGY20': 20, 'STARTUP': 50 }, feedbacks: [], joinRequests: []
+    };
+}
+
+function loadDB() {
+    try { if (fs.existsSync(DB_FILE)) return JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); } 
+    catch (e) { console.error("DB Load Error"); }
+    return getDefaultDB();
+}
+
+let DB = loadDB();
+function saveDB() { fs.writeFileSync(DB_FILE, JSON.stringify(DB, null, 2)); }
+
+// --- 1. AUTHENTICATION ---
+app.post('/api/auth/login', (req, res) => {
+    const { phone } = req.body;
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    DB.otps[phone] = { otp, expires: Date.now() + 5 * 60 * 1000 };
+    saveDB();
+    console.log(`\n📱 OTP for ${phone}: ${otp}\n`);
+    res.json({ ok: true, msg: 'OTP sent', dev_otp: otp });
 });
 
+app.post('/api/auth/verify', (req, res) => {
+    const { phone, otp } = req.body;
+    const record = DB.otps[phone];
+    if (!record || record.otp !== otp || Date.now() > record.expires) return res.status(400).json({ ok: false, msg: 'Invalid or Expired OTP' });
+    delete DB.otps[phone];
+    let user = DB.users.find(u => u.phone === phone);
+    if (!user) { user = { phone, createdAt: Date.now() }; DB.users.push(user); }
+    saveDB();
+    res.json({ ok: true, user });
+});
+
+// --- 2. BOOKING CREATION ---
+app.get('/api/health', (req, res) => res.json({ ok: true, activePorters: DB.porters.filter(p => p.active).length }));
+app.get('/api/porters', (req, res) => res.json({ ok: true, porters: DB.porters }));
+app.get('/api/porters/active', (req, res) => res.json({ ok: true, porters: DB.porters.filter(p => p.active) }));
+
+app.post('/api/coupon/validate', (req, res) => {
+    const discount = DB.coupons[req.body.code?.toUpperCase()];
+    if (!discount) return res.status(400).json({ ok: false, msg: 'Invalid coupon' });
+    res.json({ ok: true, off: discount, label: `₹${discount} off applied` });
+});
+
+app.post('/api/booking', (req, res) => {
+    const { userPhone, pickup, drop, bags, distanceKm, couponCode } = req.body;
+    let total = 50 + Math.round((parseFloat(distanceKm) || 0) * 20) + (parseInt(bags) || 1) * 10;
+    let discount = DB.coupons[couponCode?.toUpperCase()] || 0;
+    total -= discount;
+
+    const bId = 'LB' + Math.floor(10000 + Math.random() * 90000);
+    const activePorters = DB.porters.filter(p => p.active);
+    
+    const booking = {
+        bookingId: bId, customerPhone: userPhone, pickup, drop, distanceKm, bags,
+        total: Math.max(30, total), discount, eta: Math.max(2, Math.ceil((distanceKm || 1) * 3)),
+        status: 'pending', assignedPorter: null, createdAt: Date.now()
+    };
+    DB.bookings.push(booking);
+    saveDB();
+
+    console.log(`\n🚀 Booking ${bId} Created. Broadcasted to porters.\n`);
+    res.json({ ok: true, booking, activeCount: activePorters.length, porters: activePorters });
+});
+
+// --- 3. PORTER ACCEPT (FASTEST FINGER FIRST) ---
+app.post('/api/booking/accept', (req, res) => {
+    const { bookingId, porterId } = req.body;
+    const booking = DB.bookings.find(b => b.bookingId === bookingId);
+    const porter = DB.porters.find(p => p.id === porterId);
+
+    if (!booking || !porter) return res.status(404).json({ ok: false, msg: 'Not found' });
+
+    // Lock Mechanism
+    if (booking.assignedPorter || booking.status !== 'pending') {
+        return res.status(409).json({ ok: false, msg: 'Too late! Another porter accepted this.' });
+    }
+
+    booking.startOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    booking.status = 'confirmed';
+    booking.assignedPorter = { id: porter.id, name: porter.name, phone: porter.phone, rating: porter.rating };
+    saveDB();
+
+    console.log(`\n✅ Booking ${bookingId} Won By: ${porter.name} (Start OTP: ${booking.startOtp})\n`);
+    res.json({ ok: true, booking, porter });
+});
+
+// --- 4. TRIP CONTROL (Start, End, History) ---
+app.post('/api/bookings/history', (req, res) => {
+    res.json({ ok: true, bookings: DB.bookings.filter(b => b.customerPhone === req.body.phone).reverse() });
+});
+
+app.post('/api/booking/start', (req, res) => {
+    const { bookingId, otp } = req.body;
+    const b = DB.bookings.find(x => x.bookingId === bookingId);
+    if (!b || b.startOtp !== otp) return res.status(400).json({ ok: false, msg: 'Wrong OTP! Ask customer.' });
+    b.status = 'in_progress'; b.startedAt = Date.now(); saveDB();
+    res.json({ ok: true, msg: 'Service Started.' });
+});
+
+app.post('/api/booking/status', (req, res) => {
+    const b = DB.bookings.find(x => x.bookingId === req.body.bookingId);
+    if (!b) return res.json({ ok: false });
+    res.json({ ok: true, status: b.status, startedAt: b.startedAt });
+});
+
+app.post('/api/booking/end', (req, res) => {
+    const b = DB.bookings.find(x => x.bookingId === req.body.bookingId);
+    if (!b || b.status !== 'in_progress') return res.status(400).json({ ok: false, msg: 'Trip not in progress' });
+    
+    b.status = 'completed'; b.endedAt = Date.now();
+    const mins = Math.max(1, Math.ceil((b.endedAt - b.startedAt) / 60000));
+    b.bill = { durationMins: mins, baseFare: 50, timeCharge: mins * 2, totalAmount: 50 + (mins * 2) };
+    if(b.assignedPorter) { const p = DB.porters.find(x => x.id === b.assignedPorter.id); if(p) p.trips += 1; }
+    saveDB();
+    res.json({ ok: true, bill: b.bill, msg: 'Trip Ended Successfully' });
+});
+
+// --- 5. DASHBOARDS & FEEDBACK ---
+app.get('/api/admin/dashboard', (req, res) => {
+    const active = DB.bookings.filter(b => ['pending','confirmed','in_progress'].includes(b.status));
+    const completed = DB.bookings.filter(b => b.status === 'completed');
+    const revenue = completed.reduce((sum, b) => sum + (b.bill?.totalAmount || b.total || 0), 0);
+    res.json({ ok: true, stats: { totalBookings: DB.bookings.length, activeCount: active.length, revenue }, activeBookings: active.reverse() });
+});
+
+app.post('/api/porter/duty', (req, res) => {
+    const booking = DB.bookings.find(b => b.assignedPorter && b.assignedPorter.phone.includes(req.body.phone) && ['confirmed', 'in_progress'].includes(b.status));
+    if (!booking) return res.json({ ok: false, msg: 'No active duty right now.' });
+    res.json({ ok: true, booking });
+});
+
+app.post('/api/feedback', (req, res) => { DB.feedbacks.push({ ...req.body, ts: Date.now() }); saveDB(); res.json({ ok: true }); });
+app.get('/api/analytics', (req, res) => res.json({ ok: true, stats: { totalBookings: DB.bookings.length, totalUsers: DB.users.length }}));
+app.post('/api/porters/join', (req, res) => { DB.joinRequests.push({ ...req.body, ts: Date.now() }); saveDB(); res.json({ ok: true }); });
+
+app.listen(PORT, () => console.log(`\n🚀 LUGGYBOY FASTEST-FINGER-FIRST BACKEND LIVE ON PORT ${PORT}\n`));
 /* ══════════════════════════════════════════════════════════
    7. START TRIP (Porter enters Customer OTP)
 ══════════════════════════════════════════════════════════ */
