@@ -13,9 +13,9 @@
    CONFIG  —  edit only this block
 ════════════════════════════════════════════ */
 window.CFG = {
-  API_BASE : 'https://luggyboy.onrender.com/api',   // ← change to your server URL after deploy
-  MAPS_KEY   : 'AIzaSyAQ1CaIw3LMsDAAXHkkHkjEYsupv2ktt2Q',    // ← Google Cloud Console
-  ADMIN_WA   : '916267293870',                // ← your WhatsApp
+  API_BASE   : 'https://luggyboy.onrender.com/api',   // ← change to your server URL after deploy
+  MAPS_KEY   : 'AIzaSyAQ1CaIw3LMsDAAXHkkHkjEYsupv2ktt2Q',     // ← Google Cloud Console
+  ADMIN_WA   : '916267293870',                 // ← your WhatsApp
   COUPONS    : { 'FIRST50':30, 'LUGGY20':20, 'STARTUP':50 }, // mirrors server
 };
 </script>
@@ -255,7 +255,7 @@ nav{position:fixed;top:0;inset-inline:0;z-index:300;display:flex;align-items:cen
 .map-ph code{background:var(--bk4);padding:2px 5px;border-radius:4px;font-size:.68rem;color:#aaa}
 
 /* ════════ TICKER ════════ */
-.ticker{background:var(--bk3);border-top:1px solid #181818;border-bottom:1px solid #181818;padding:10px 5%;display:flex;align-items:center;gap:12px;overflow:hidden}
+.ticker{background:var(--bk3);border:1px solid #181818;border-bottom:1px solid #181818;padding:10px 5%;display:flex;align-items:center;gap:12px;overflow:hidden}
 .t-lbl{font-size:.61rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--y);white-space:nowrap;display:flex;align-items:center;gap:5px;flex-shrink:0}
 .t-lbl::before{content:'●';font-size:.4rem;animation:blink 1.2s infinite}
 .t-track{display:flex;gap:26px;animation:scroll 26s linear infinite;white-space:nowrap}
@@ -464,7 +464,6 @@ footer{background:var(--bk2);border-top:1px solid #131313;padding:38px 5% 20px}
 
   <div style="border-top: 1.5px dashed #333; margin: 10px 15px;"></div>
 
-  <button class="sbi" onclick="closeSB();openAssignModal()"><div class="sbi-ico">⚡</div><div><div class="sbi-lbl">Assign Porter</div><div class="sbi-sub">Admin Action</div></div></button>
   <button class="sbi" onclick="closeSB();enterStartOtp()"><div class="sbi-ico">🔑</div><div><div class="sbi-lbl">Start Service</div><div class="sbi-sub">Enter Customer OTP</div></div></button>
   <button class="sbi" onclick="closeSB();endTrip()"><div class="sbi-ico">🧾</div><div><div class="sbi-lbl">End Trip</div><div class="sbi-sub">Generate Final Bill</div></div></button>
   </div>
@@ -638,29 +637,18 @@ footer{background:var(--bk2);border-top:1px solid #131313;padding:38px 5% 20px}
 </div>
 
 <div class="ov" id="bookModal"><div class="modal">
-  <div class="m-ico">🚀</div><h3>Dispatched!</h3>
-  <div class="m-bid" id="m-bid">LB-00000</div>
-  <div class="dispatch-box"><div class="db-lbl">📡 Sent to Active Porters</div><div id="dispatch-list"></div></div>
-  <div class="m-dtl" id="m-dtl"></div>
-  <p>WhatsApp opened for each active porter.<br/>First to reply <strong style="color:var(--green)">YES [BOOKING_ID]</strong> gets assigned.</p>
-  <button class="btn-book" style="margin-bottom:8px" onclick="closeModal('bookModal');openAssignModal()">🧑‍💼 Assign Porter (After Reply)</button>
-  <button class="m-close" onclick="closeModal('bookModal')">Close</button>
-</div></div>
-
-<div class="ov" id="assignModal"><div class="modal">
-  <div class="m-ico">🧑‍💼</div><h3>Assign Porter</h3>
-  <p>Select the porter who replied YES:</p>
-  <div class="accept-list" id="accept-list"></div>
-  <button class="m-close" onclick="closeModal('assignModal')">Cancel</button>
-</div></div>
-
-<div class="ov" id="assignedModal"><div class="modal">
-  <div class="m-ico">✅</div><h3>Porter Assigned!</h3>
-  <div class="m-dtl" id="assigned-dtl"></div>
-  <a class="m-call" id="call-btn" href="#">📞 Call Porter Now</a>
-  <a class="m-wa" id="assigned-wa" href="#" target="_blank">💬 WhatsApp Porter</a>
-  <button class="btn-book" style="margin-bottom:8px" onclick="closeModal('assignedModal');openFeedback()">⭐ Rate This Booking</button>
-  <button class="m-close" onclick="closeModal('assignedModal')">Done</button>
+  <div style="text-align:center; padding:15px;">
+        <div style="font-size:2.5rem; animation: blink 1s infinite; margin-bottom: 10px;">📡</div>
+        <h3 style="color:var(--y); margin-bottom:10px;">Broadcasting to Porters...</h3>
+        <div id="m-bid" style="font-size:1.2rem; font-weight:bold; letter-spacing: 2px; margin-bottom:15px;">LB-XXXXX</div>
+        <p style="font-size:0.8rem; color:#aaa; margin-bottom:20px;">First porter to accept will be assigned.</p>
+        
+        <button style="width: 100%; background:#222; color:#fff; border:1px solid #555; padding:12px; border-radius:8px; cursor:pointer; font-family: 'Syne', sans-serif; transition: background 0.2s;" 
+                id="sim-accept-btn" onclick="">
+            🧪 Simulate Porter Accepting
+        </button>
+        <button class="m-close" style="width:100%; margin-top:10px;" onclick="closeModal('bookModal')">Cancel Search</button>
+    </div>
 </div></div>
 
 <div class="ov" id="feedbackModal"><div class="modal">
@@ -732,7 +720,7 @@ async function api(path,opts={}){
     return await r.json();
   }catch(e){
     console.error('API error:',path,e.message);
-    return{ok:false,msg:'Cannot reach server. Check your connection or run the backend.'};
+    return{ok:false,msg:'Cannot reach server. Check your connection.'};
   }
 }
 
@@ -752,7 +740,7 @@ async function checkBackend(){
   const dot=document.getElementById('api-dot'),txt=document.getElementById('api-txt');
   const r=await api('/health');
   if(r.ok){dot.className='api-dot ok';txt.textContent='✅ Backend connected — '+r.activePorters+' porters active';}
-  else{dot.className='api-dot err';txt.textContent='⚠️ Backend offline. Run: npm start in project folder';}
+  else{dot.className='api-dot err';txt.textContent='⚠️ Backend offline.';}
 }
 
 async function loadPorters(){
@@ -813,7 +801,6 @@ async function sendOTP(resend=false){
   document.getElementById('ls2').classList.add('on');
   if(r.waLink)window.open(r.waLink,'_blank');
   toast(resend?'📲 OTP resent!':'📲 OTP sent via WhatsApp!','g');
-  if(devOTP)console.log(`🔐 Dev OTP for ${phone}: ${devOTP}`);
 }
 
 function oNav(el,nxt){el.value=el.value.replace(/\D/,'');if(el.value&&nxt)document.getElementById(nxt).focus();if(!nxt)verifyOTP();}
@@ -1010,110 +997,28 @@ async function initiateBooking(){
 
   // Show "Waiting for Porter" Screen
   document.getElementById('m-bid').textContent=lastBID;
-  document.getElementById('m-dtl').innerHTML=`
-    <div style="text-align:center; padding:15px;">
-        <div style="font-size:2rem; animation: blink 1s infinite;">📡</div>
-        <h4 style="color:var(--y); margin:10px 0;">Broadcasting to Porters...</h4>
-        <p style="font-size:0.8rem; color:#aaa;">First porter to accept will be assigned.</p>
-        
-        <button style="margin-top:20px; background:#333; color:#fff; border:1px solid #555; padding:8px 15px; border-radius:5px; cursor:pointer;" 
-                onclick="simulatePorterAccept('${r.porters[0].id}')">
-            🧪 Simulate Porter 1 Accepting
-        </button>
-    </div>
-  `;
+  document.getElementById('sim-accept-btn').setAttribute('onclick', `simulatePorterAccept('${r.porters[0].id}')`);
   openModal('bookModal');
 }
 
 /* ══════════ SIMULATE PORTER ACCEPTING ══════════ */
 async function simulatePorterAccept(porterId) {
-  toast('Porter accepting...', 'y');
+  document.getElementById('sim-accept-btn').innerText = '⏳ Accepting...';
+  document.getElementById('sim-accept-btn').disabled = true;
+  
   const r = await api('/booking/accept', {method:'POST', body:JSON.stringify({bookingId: lastBID, porterId: porterId})});
   
-  if(!r.ok){toast('❌ '+r.msg,'r');return;}
+  if(!r.ok){toast('❌ '+r.msg,'r'); document.getElementById('sim-accept-btn').innerText = '🧪 Simulate Porter Accepting'; document.getElementById('sim-accept-btn').disabled = false; return;}
   
   closeModal('bookModal');
   toast('✅ Porter Assigned!', 'g');
   
   // Go directly to My Bookings so user can see the OTP
   goS('bookings');
-}
-/* ══════════ ASSIGN PORTAL ══════════ */
-function openAssignModal(){
-  if(!lastBooking){toast('⚠️ No active booking','r');return;}
-  const act=porterData.filter(p=>p.active);
-  document.getElementById('accept-list').innerHTML=act.map(p=>`
-    <div class="ai"><div class="ai-l"><div class="ai-av">${p.emoji||'👤'}</div><div><div class="ai-nm">${p.name}</div><div class="ai-sub">⭐ ${p.rating} · ${p.area}</div></div></div>
-    <button class="btn-assign" onclick="assignPorter('${p.id}')">ASSIGN</button></div>`).join('');
-  openModal('assignModal');
-}
-
-async function assignPorter(pid){
-  const r=await api('/booking/accept',{method:'POST',body:JSON.stringify({bookingId:lastBID,porterId:pid})});
-  if(!r.ok){toast('❌ '+r.msg,'r');return;}
-  lastPorter=r.porter;
-  closeModal('assignModal');
-  const b=r.booking,p=r.porter;
-  document.getElementById('assigned-dtl').innerHTML = `
-    <div style="background:rgba(34,197,94,.08); border:1.5px dashed var(--green); border-radius:8px; padding:15px; text-align:center; margin-bottom:15px;">
-       <div style="font-size:0.65rem; color:var(--green); text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:5px;">Share this OTP with Porter to start</div>
-       <div style="font-size:2.2rem; font-family:'Syne', sans-serif; font-weight:800; color:var(--wh); letter-spacing:6px;">${b.startOtp}</div>
-    </div>
-    <div class="mrow"><span class="mk">👤 Porter</span><span class="mv y">${p.name}</span></div>
-    <div class="mrow"><span class="mk">⭐ Rating</span><span class="mv">${p.rating} · ${p.trips} trips</span></div>
-  `;
-  checkStatusLoop(b.bookingId);
-  document.getElementById('call-btn').href=`tel:+${p.phone}`;
-  document.getElementById('assigned-wa').href=r.userWaLink;
-  window.open(r.userWaLink,'_blank');
-  openModal('assignedModal');
-  toast(`✅ ${p.name} assigned!`,'g');
-}
-
-/* ══════════ FEEDBACK ══════════ */
-function openFeedback(){
-  closeModal('assignedModal');selStar=0;
-  document.querySelectorAll('.sb').forEach(b=>{b.classList.remove('lit');b.style.transform='scale(1)'});
-  document.getElementById('fb-ta').value='';
-  document.getElementById('fb-ptxt').textContent=lastPorter?`How was ${lastPorter.name}?`:'How was your experience?';
-  openModal('feedbackModal');
-}
-function setStar(n){selStar=n;document.querySelectorAll('.sb').forEach((b,i)=>{b.classList.toggle('lit',i<n);b.style.transform=i<n?'scale(1.12)':'scale(1)';});}
-async function submitFeedback(){
-  if(!selStar){toast('⭐ Select a rating first','y');return;}
-  const u=getUser();
-  const r=await api('/feedback',{method:'POST',body:JSON.stringify({bookingId:lastBID,userPhone:u?.phone||'guest',porterId:lastPorter?.id||null,stars:selStar,comment:document.getElementById('fb-ta').value.trim()})});
-  closeModal('feedbackModal');
-  if(r.ok)toast(`🌟 Thanks! ${selStar} star${selStar>1?'s':''} submitted.`,'g');
-  else toast('Feedback saved locally','y');
-}
-
-/* ══════════ PORTER JOIN ══════════ */
-async function joinPorter(){
-  const n=document.getElementById('jn').value.trim();
-  const p=document.getElementById('jp').value.trim();
-  const a=document.getElementById('js').value;
-  const b=document.getElementById('jb').value.trim();
-  if(!n){toast('⚠️ Enter your name','y');return;}
-  if(!p||p.length!==10){toast('⚠️ Valid 10-digit number required','y');return;}
-  if(!a){toast('⚠️ Select your station','y');return;}
-  const r=await api('/porters/join',{method:'POST',body:JSON.stringify({name:n,phone:p,area:a,bio:b})});
-  document.getElementById('p-msg').textContent=r.ok?`Hi ${n}! We'll WhatsApp you at ${p} within 24 hours.`:(r.msg||'Application received!');
-  if(r.adminWaLink)document.getElementById('p-wa').href=r.adminWaLink;
-  openModal('porterModal');
-  ['jn','jp','jb'].forEach(id=>document.getElementById(id).value='');document.getElementById('js').value='';
-}
-
-/* ══════════ REFERRAL ══════════ */
-function openReferModal(){
-  const u=getUser();const code=u?getRefCode(u.phone):'LOGIN-FIRST';
-  document.getElementById('ref-cd-disp').textContent=code;
-  openModal('referModal');
-}
-function shareRef(){
-  const u=getUser();const code=u?getRefCode(u.phone):'---';
-  const msg=encodeURIComponent(`🧳 *Book a porter with LuggyBoy!*\n\nUse my code *${code}* → get ₹20 off!\n\nBook: https://luggyboy.in\n\n_Fixed price. 2 min ETA. No bargaining._`);
-  window.open(`https://wa.me/?text=${msg}`,'_blank');
+  
+  // Reset button state for next time
+  document.getElementById('sim-accept-btn').innerText = '🧪 Simulate Porter Accepting'; 
+  document.getElementById('sim-accept-btn').disabled = false;
 }
 
 /* ══════════ MY BOOKINGS (UPDATED WITH OTP DISPLAY) ══════════ */
@@ -1121,7 +1026,6 @@ async function loadMyBookings() {
   const phone = document.getElementById('ph-in').value.trim();
   const listDiv = document.getElementById('history-list');
 
-  // Agar phone number input box mein nahi hai (ya user guest hai)
   if(!phone) { 
     const u = getUser();
     if(!u || !u.phone) {
@@ -1149,6 +1053,19 @@ async function loadMyBookings() {
             <div style="font-size:0.65rem; color:var(--green); text-transform:uppercase; font-weight:700; margin-bottom:3px;">Share this OTP with Porter to Start</div>
             <div style="font-size:2rem; font-family:'Syne', sans-serif; font-weight:800; color:var(--wh); letter-spacing:4px;">${b.startOtp}</div>
             <div style="font-size:0.75rem; color:#aaa; margin-top:5px;">Porter: <b>${b.assignedPorter.name}</b></div>
+            
+            <div style="display:flex; gap:10px; margin-top:15px;">
+               <a href="tel:+${b.assignedPorter.phone}" style="flex:1; background:var(--bk3); color:var(--wh); text-decoration:none; padding:8px; border-radius:5px; border:1px solid #333; font-size:0.8rem;">📞 Call</a>
+               <a href="https://wa.me/${b.assignedPorter.phone}" target="_blank" style="flex:1; background:var(--green); color:#000; text-decoration:none; padding:8px; border-radius:5px; font-weight:bold; font-size:0.8rem;">💬 Chat</a>
+            </div>
+        </div>
+        ` : ''}
+        
+        ${b.status === 'in_progress' ? `
+        <div style="background:#222; border-radius:8px; padding:15px; text-align:center; margin:15px 0;">
+            <div style="font-size:2.5rem; margin-bottom:5px;">🚚</div>
+            <div style="color:var(--green); font-weight:bold; letter-spacing:1px; margin-bottom:5px;">TRIP IS LIVE</div>
+            <div style="font-size:0.8rem; color:#aaa;">Porter is heading to drop location.</div>
         </div>
         ` : ''}
 
@@ -1230,65 +1147,9 @@ async function enterStartOtp() {
   if(!otp) return;
   
   const r = await api('/booking/start', {method:'POST', body:JSON.stringify({bookingId: bid.toUpperCase(), otp})});
-  if(r.ok) { toast(r.msg, 'g'); } else { toast(r.msg, 'r'); }
+  if(r.ok) { toast(r.msg, 'g'); goS('bookings'); } else { toast(r.msg, 'r'); }
 }
 
-/* ══════════ LIVE TRIP ANIMATION & TRACKING ══════════ */
-let liveTrackingInterval;
-let tripStartTime;
-
-function checkStatusLoop(bid) {
-  if(liveTrackingInterval) clearInterval(liveTrackingInterval);
-  
-  liveTrackingInterval = setInterval(async () => {
-    const r = await api('/booking/status', {method:'POST', body:JSON.stringify({bookingId: bid})});
-    
-    if (r.ok && r.status === 'in_progress') {
-      clearInterval(liveTrackingInterval);
-      tripStartTime = r.startedAt;
-      showLiveTripScreen();
-    } else if (r.ok && r.status === 'completed') {
-      clearInterval(liveTrackingInterval);
-      document.getElementById('assigned-dtl').innerHTML = `
-        <div style="text-align:center; padding:30px 10px; background:rgba(34,197,94,.08); border-radius:12px; border:1px solid var(--green);">
-          <div style="font-size:3rem; margin-bottom:10px;">✅</div>
-          <h3 style="color:var(--green); margin:0; font-weight:800;">TRIP COMPLETED</h3>
-          <p style="color:#aaa; font-size:0.85rem; margin-top:5px;">Thank you for using LuggyBoy!</p>
-        </div>`;
-    }
-  }, 3000); 
-}
-
-function showLiveTripScreen() {
-  if(!document.getElementById('bounce-css')){
-    const style = document.createElement('style');
-    style.id = 'bounce-css';
-    style.innerHTML = `@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }`;
-    document.head.appendChild(style);
-  }
-
-  document.getElementById('assigned-dtl').innerHTML = `
-    <div style="text-align:center; padding:30px 10px; background:var(--bk3); border-radius:12px; border:1.5px solid #333; margin-bottom:15px;">
-      <div style="font-size:4rem; animation: bounce 0.8s infinite alternate;">🚚</div>
-      <h3 style="color:var(--green); margin-top:15px; font-weight:800; letter-spacing:1px; font-size:1.1rem;">LUGGAGE IN TRANSIT</h3>
-      <p style="color:#888; font-size:0.8rem; margin:5px 0 15px 0;">Your porter is heading to the drop location.</p>
-      
-      <div style="background:#000; display:inline-block; padding:10px 25px; border-radius:30px; border:1px solid #444;">
-        <span style="color:#888; font-size:0.75rem; text-transform:uppercase; margin-right:10px;">Time Elapsed</span>
-        <span id="trip-timer" style="font-size:1.5rem; font-weight:800; color:var(--y); font-family:'Syne', sans-serif;">00:00</span>
-      </div>
-    </div>
-  `;
-
-  setInterval(() => {
-    if(!tripStartTime) return;
-    const diff = Math.floor((Date.now() - tripStartTime) / 1000);
-    const m = String(Math.floor(diff / 60)).padStart(2, '0');
-    const s = String(diff % 60).padStart(2, '0');
-    const timerEl = document.getElementById('trip-timer');
-    if(timerEl) timerEl.textContent = `${m}:${s}`;
-  }, 1000);
-}
 
 /* ══════════ DIGITAL BILL SYSTEM ══════════ */
 async function endTrip() {
@@ -1298,6 +1159,7 @@ async function endTrip() {
   const r = await api('/booking/end', {method:'POST', body:JSON.stringify({bookingId: bid.toUpperCase()})});
   if(r.ok) {
     showDigitalBill(r.bill, bid.toUpperCase());
+    goS('bookings');
   } else {
     toast(r.msg, 'r');
   }
@@ -1330,13 +1192,48 @@ function showDigitalBill(bill, bid) {
           <span style="color:#22c55e;">₹${bill.totalAmount}</span>
         </div>
         
-        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="width:100%; padding:15px; background:var(--bk3); color:var(--wh); border:1px solid #444; border-radius:8px; font-weight:700; font-size:1rem; cursor:pointer; text-transform:uppercase;">Pay & Close</button>
+        <button onclick="this.parentElement.parentElement.parentElement.remove(); openFeedback();" style="width:100%; padding:15px; background:var(--bk3); color:var(--wh); border:1px solid #444; border-radius:8px; font-weight:700; font-size:1rem; cursor:pointer; text-transform:uppercase;">Pay & Close</button>
       </div>
     </div>
   `;
   document.body.appendChild(div);
 }
 
+/* ══════════ FEEDBACK & EXTRAS ══════════ */
+function openFeedback(){
+  selStar=0;
+  document.querySelectorAll('.sb').forEach(b=>{b.classList.remove('lit');b.style.transform='scale(1)'});
+  document.getElementById('fb-ta').value='';
+  openModal('feedbackModal');
+}
+function setStar(n){selStar=n;document.querySelectorAll('.sb').forEach((b,i)=>{b.classList.toggle('lit',i<n);b.style.transform=i<n?'scale(1.12)':'scale(1)';});}
+async function submitFeedback(){
+  if(!selStar){toast('⭐ Select a rating first','y');return;}
+  closeModal('feedbackModal');
+  toast(`🌟 Thanks! ${selStar} stars submitted.`,'g');
+}
+
+async function joinPorter(){
+  const n=document.getElementById('jn').value.trim();
+  const p=document.getElementById('jp').value.trim();
+  const a=document.getElementById('js').value;
+  if(!n || !p || !a){toast('⚠️ Fill required fields','y');return;}
+  document.getElementById('p-msg').textContent=`Hi ${n}! We'll WhatsApp you at ${p} within 24 hours.`;
+  openModal('porterModal');
+  ['jn','jp','jb'].forEach(id=>document.getElementById(id).value='');document.getElementById('js').value='';
+}
+
+function openReferModal(){
+  const u=getUser();const code=u?getRefCode(u.phone):'LOGIN-FIRST';
+  document.getElementById('ref-cd-disp').textContent=code;
+  openModal('referModal');
+}
+function shareRef(){
+  const u=getUser();const code=u?getRefCode(u.phone):'---';
+  const msg=encodeURIComponent(`🧳 *Book a porter with LuggyBoy!*\n\nUse my code *${code}* → get ₹20 off!\n\nBook: https://luggyboy.in`);
+  window.open(`https://wa.me/?text=${msg}`,'_blank');
+}
 </script>
 </body>
 </html>
+ 
