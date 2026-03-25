@@ -1,7 +1,7 @@
 {
   "name": "luggyboy-backend",
   "version": "1.0.0",
-  "description": "LuggyBoy – Smart Porter Booking Backend",
+  "description": "LuggyBoy – Smart Porter Booking Backend (MongoDB Version)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
