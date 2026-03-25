@@ -1,89 +1,70 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.')); 
+app.use(express.static('.'));
 
 // 🔗 MONGODB CONNECTION
 const mongoURI = "mongodb+srv://luggyadmin:Luggy123@cluster0.n6uatcs.mongodb.net/luggyboy?retryWrites=true&w=majority&appName=Cluster0";
+mongoose.connect(mongoURI).then(() => console.log("✅ MongoDB Connected!")).catch(err => console.log(err));
 
-mongoose.connect(mongoURI)
-  .then(() => console.log("✅ LuggyBoy Cloud Connected Successfully!"))
-  .catch(err => console.error("❌ MongoDB Connection Error:", err));
-
-// 📝 DATABASE MODELS
-const userSchema = new mongoose.Schema({
-  phone: { type: String, required: true, unique: true },
-  name: { type: String, default: "Guest User" },
-  referralCode: String,
-  createdAt: { type: Date, default: Date.now }
-});
-const User = mongoose.model('User', userSchema);
-
+// 📝 SCHEMA
 const bookingSchema = new mongoose.Schema({
-  bookingId: { type: String, required: true, unique: true },
-  customerPhone: { type: String, required: true, index: true },
-  customerName: { type: String, default: "Guest User" },
-  pickup: String,
-  drop: String,
-  bags: { type: Number, default: 1 },
-  fare: Number,
-  status: { 
-    type: String, 
-    enum: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'expired'], 
-    default: 'pending' 
-  },
-  otp: String,
-  couponCode: String,
+  bookingId: String,
+  customerPhone: String,
+  customerName: { type: String, default: "Guest" },
+  pickup: String, drop: String, fare: Number,
+  status: { type: String, default: 'pending' },
+  otp: String, assignedPorter: Object,
   createdAt: { type: Date, default: Date.now }
 });
 const Booking = mongoose.model('Booking', bookingSchema);
 
-// 🔑 AUTH & PROFILE
-app.post('/api/auth/verify', async (req, res) => {
-  const { phone, name } = req.body;
-  try {
-    let user = await User.findOne({ phone });
-    if (!user) {
-      user = new User({ phone, name: name || "Guest User" });
-      await user.save();
-    }
-    res.json({ ok: true, msg: 'Verified', user });
-  } catch (err) { res.status(500).json({ ok: false }); }
-});
+// 🧔 PORTERS LIST (Wapas aa gayi!)
+const PORTERS = [
+  { id:'P01', name:'Ravi Kumar', phone:'916267293870', area:'Indore Junction', active:true, emoji:'👨‍💼' },
+  { id:'P02', name:'Suresh Patel', phone:'919222222222', area:'Indore Airport', active:true, emoji:'🧑‍💼' },
+  { id:'P03', name:'Mahesh Yadav', phone:'919333333333', area:'Sarwate Stand', active:true, emoji:'👷' }
+];
 
-// 🚀 BOOKING API
+// 🚀 APIs
+app.get('/api/porters/active', (req, res) => res.json({ ok: true, porters: PORTERS }));
+
 app.post('/api/booking', async (req, res) => {
-  try {
-    const { userPhone, userName, pickup, drop, bags, distanceKm } = req.body;
-    const bId = 'LB' + Math.floor(10000 + Math.random() * 90000);
-    const fare = 50 + (parseFloat(distanceKm) * 20) + (parseInt(bags) * 10);
-
-    const newBooking = new Booking({
-      bookingId: bId,
-      customerPhone: userPhone,
-      customerName: userName || "Guest User",
-      pickup, drop, bags,
-      fare: Math.max(30, fare),
-      otp: Math.floor(1000 + Math.random() * 9000).toString(),
-      status: 'pending'
-    });
-
-    await newBooking.save();
-    res.json({ ok: true, msg: 'Booking Placed!', booking: newBooking });
-  } catch (err) { res.status(500).json({ ok: false }); }
+  const { userPhone, pickup, drop, distanceKm } = req.body;
+  const bId = 'LB' + Math.floor(1000 + Math.random() * 9000);
+  const fare = 50 + (parseFloat(distanceKm) * 20);
+  
+  const newBooking = new Booking({
+    bookingId: bId, customerPhone: userPhone,
+    pickup, drop, fare, otp: Math.floor(1000 + Math.random() * 9000).toString()
+  });
+  await newBooking.save();
+  res.json({ ok: true, booking: newBooking });
 });
 
-// 📋 HISTORY API
-app.post('/api/bookings/history', async (req, res) => {
-  const { phone } = req.body;
-  const history = await Booking.find({ customerPhone: phone }).sort({ createdAt: -1 });
-  res.json({ ok: true, bookings: history });
+app.post('/api/booking/accept', async (req, res) => {
+  const { bookingId, porterId } = req.body;
+  const porter = PORTERS.find(p => p.id === porterId);
+  const booking = await Booking.findOne({ bookingId });
+  if (booking && porter) {
+    booking.status = 'confirmed';
+    booking.assignedPorter = porter;
+    await booking.save();
+    res.json({ ok: true, booking });
+  } else { res.json({ ok: false, msg: 'Error' }); }
 });
 
-app.listen(PORT, () => console.log(`🚀 Server Live on Port ${PORT}`));
+app.get('/api/admin/dashboard', async (req, res) => {
+  const bookings = await Booking.find().sort({ createdAt: -1 });
+  const revenue = bookings.filter(b => b.status === 'completed').reduce((s, b) => s + b.fare, 0);
+  res.json({ ok: true, stats: { total: bookings.length, revenue }, activeBookings: bookings });
+});
+
+app.listen(PORT, () => console.log(`🚀 LuggyBoy Live on ${PORT}`));
