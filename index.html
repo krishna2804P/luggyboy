@@ -1,43 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>LuggyBoy - Admin Dashboard</title>
+    <title>LuggyBoy Pro Dashboard</title>
     <style>
         body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h2 { color: #333; }
-        button { padding: 10px 20px; background: #ffcc00; border: none; cursor: pointer; font-weight: bold; border-radius: 5px; }
-        .booking-item { border-bottom: 1px solid #eee; padding: 10px 0; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .stat-box { display: inline-block; width: 30%; background: #ffcc00; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; }
+        .porter-card { border: 1px solid #ddd; padding: 10px; margin: 5px; border-radius: 8px; display: inline-block; width: 250px; }
+        button { cursor: pointer; background: #333; color: #fff; border: none; padding: 8px 15px; border-radius: 4px; }
     </style>
 </head>
 <body>
+    <h1>🧳 LuggyBoy Business Control</h1>
+
     <div class="card">
-        <h1>🧳 LuggyBoy Dashboard</h1>
-        <p>Check your Cloud Bookings below:</p>
-        <button onclick="fetchHistory()">🔄 Refresh My Bookings</button>
-        <div id="historyList"></div>
+        <div class="stat-box" id="totalB">Total: 0</div>
+        <div class="stat-box" id="revB">Revenue: ₹0</div>
+        <button onclick="loadData()">🔄 Refresh Data</button>
     </div>
 
+    <h2>👨‍💼 Active Porters</h2>
+    <div id="porterList"></div>
+
+    <h2>📦 Live Bookings</h2>
+    <div id="bookingList"></div>
+
     <script>
-        async function fetchHistory() {
-            const phone = prompt("Enter phone number to see history:");
-            const res = await fetch('/api/bookings/history', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ phone })
-            });
+        async function loadData() {
+            // Load Stats & Bookings
+            const res = await fetch('/api/admin/dashboard');
             const data = await res.json();
-            const list = document.getElementById('historyList');
-            list.innerHTML = '<h3>Recent Trips:</h3>';
-            data.bookings.forEach(b => {
-                list.innerHTML += `<div class="booking-item">
-                    <b>ID: ${b.bookingId}</b> - ${b.customerName}<br>
-                    From: ${b.pickup} To: ${b.drop}<br>
-                    Status: <span style="color:blue">${b.status}</span> | Fare: ₹${b.fare}
+            document.getElementById('totalB').innerText = "Total: " + data.stats.total;
+            document.getElementById('revB').innerText = "Revenue: ₹" + data.stats.revenue;
+
+            const bList = document.getElementById('bookingList');
+            bList.innerHTML = '';
+            data.activeBookings.forEach(b => {
+                bList.innerHTML += `<div class="card">
+                    <b>ID: ${b.bookingId}</b> | Status: ${b.status}<br>
+                    From: ${b.pickup} To: ${b.drop} | Fare: ₹${b.fare}<br>
+                    <button onclick="acceptTrip('${b.bookingId}')">Assign to Ravi</button>
+                </div>`;
+            });
+
+            // Load Porters
+            const pRes = await fetch('/api/porters/active');
+            const pData = await pRes.json();
+            const pList = document.getElementById('porterList');
+            pList.innerHTML = '';
+            pData.porters.forEach(p => {
+                pList.innerHTML += `<div class="porter-card">
+                    ${p.emoji} <b>${p.name}</b><br>📍 ${p.area}
                 </div>`;
             });
         }
+
+        async function acceptTrip(id) {
+            await fetch('/api/booking/accept', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ bookingId: id, porterId: 'P01' })
+            });
+            loadData();
+        }
+
+        loadData();
     </script>
 </body>
 </html>
