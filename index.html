@@ -976,7 +976,7 @@ window.initMap=function(){
   }catch(e){}
 };
 
-/* ══════════ INITIATE BOOKING ══════════ */
+/* ══════════ INITIATE BOOKING (UPDATED) ══════════ */
 async function initiateBooking(){
   if(!navigator.onLine){toast('📵 No internet','r');return;}
   if(isBooking){toast('⏳ Booking in progress...','y');return;}
@@ -984,24 +984,16 @@ async function initiateBooking(){
   if(!u){toast('⚠️ Please login to book','y');setTimeout(()=>goS('login'),1200);return;}
   const pickup=document.getElementById('pickup').value.trim();
   const drop=document.getElementById('drop').value.trim();
-  if(!pickup){toast('⚠️ Enter your pickup location','y');return;}
-  if(!dLat){toast('⚠️ Click the map to set drop location','y');return;}
-  if(!drop){toast('⚠️ Drop location not set','y');return;}
+  if(!pickup || !drop){toast('⚠️ Enter pickup and drop','y');return;}
 
   isBooking=true;
   document.getElementById('bookBtn').disabled=true;
-  document.getElementById('loader-sub').textContent='Creating booking...';
   document.getElementById('loader').classList.add('on');
 
   const payload={
-    userPhone:u.phone,pickup,drop,
-    pickupLat:uLat,pickupLng:uLng,
-    dropLat:dLat,dropLng:dLng,
+    userPhone:u.phone, pickup, drop,
     bags:document.getElementById('bags').value,
-    luggageType:document.getElementById('luggt').value==='20'?'heavy':'normal',
-    distanceKm:realDist||0,
-    couponCode:couponCode||null,
-    referralCode:sessionStorage.getItem('referral')||null,
+    distanceKm:realDist||0, couponCode:couponCode||null
   };
 
   const r=await api('/booking',{method:'POST',body:JSON.stringify(payload)});
@@ -1012,30 +1004,40 @@ async function initiateBooking(){
   if(!r.ok){toast('❌ '+r.msg,'r');return;}
 
   lastBID=r.booking.bookingId;
-  lastBooking=r.booking;
-  lastPorter=null;
-
   const bks=JSON.parse(localStorage.getItem('lb_bookings')||'[]');
   bks.unshift(r.booking);localStorage.setItem('lb_bookings',JSON.stringify(bks));
   updateSBCount();
 
-  r.waLinks.forEach((w,i)=>setTimeout(()=>window.open(w.waLink,'_blank'),i*650));
-
+  // Show "Waiting for Porter" Screen
   document.getElementById('m-bid').textContent=lastBID;
-  document.getElementById('dispatch-list').innerHTML=r.waLinks.map(w=>`<div class="db-row">✅ <strong>${w.porterName}</strong></div>`).join('');
-  const b=r.booking;
   document.getElementById('m-dtl').innerHTML=`
-    <div class="mrow"><span class="mk">📍 Pickup</span><span class="mv">${cut(pickup,26)}</span></div>
-    <div class="mrow"><span class="mk">🏁 Drop</span><span class="mv">${cut(drop,26)}</span></div>
-    <div class="mrow"><span class="mk">📏 Distance</span><span class="mv">${b.distanceKm.toFixed(2)} km</span></div>
-    <div class="mrow"><span class="mk">⏱️ ETA</span><span class="mv g">${b.eta}–${b.eta+3} min</span></div>
-    ${b.discount?`<div class="mrow"><span class="mk">🎟️ Coupon</span><span class="mv g">−₹${b.discount}</span></div>`:''}
-    <div class="mrow"><span class="mk">💰 Total</span><span class="mv y">₹${b.total}</span></div>
+    <div style="text-align:center; padding:15px;">
+        <div style="font-size:2rem; animation: blink 1s infinite;">📡</div>
+        <h4 style="color:var(--y); margin:10px 0;">Broadcasting to Porters...</h4>
+        <p style="font-size:0.8rem; color:#aaa;">First porter to accept will be assigned.</p>
+        
+        <button style="margin-top:20px; background:#333; color:#fff; border:1px solid #555; padding:8px 15px; border-radius:5px; cursor:pointer;" 
+                onclick="simulatePorterAccept('${r.porters[0].id}')">
+            🧪 Simulate Porter 1 Accepting
+        </button>
+    </div>
   `;
   openModal('bookModal');
-  toast(`📤 Sent to ${r.activeCount} porter${r.activeCount!==1?'s':''}!`,'g');
 }
 
+/* ══════════ SIMULATE PORTER ACCEPTING ══════════ */
+async function simulatePorterAccept(porterId) {
+  toast('Porter accepting...', 'y');
+  const r = await api('/booking/accept', {method:'POST', body:JSON.stringify({bookingId: lastBID, porterId: porterId})});
+  
+  if(!r.ok){toast('❌ '+r.msg,'r');return;}
+  
+  closeModal('bookModal');
+  toast('✅ Porter Assigned!', 'g');
+  
+  // Go directly to My Bookings so user can see the OTP
+  goS('bookings');
+}
 /* ══════════ ASSIGN PORTAL ══════════ */
 function openAssignModal(){
   if(!lastBooking){toast('⚠️ No active booking','r');return;}
