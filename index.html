@@ -1,70 +1,1331 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>LuggyBoy Pro Dashboard</title>
-    <style>
-        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .stat-box { display: inline-block; width: 30%; background: #ffcc00; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; }
-        .porter-card { border: 1px solid #ddd; padding: 10px; margin: 5px; border-radius: 8px; display: inline-block; width: 250px; }
-        button { cursor: pointer; background: #333; color: #fff; border: none; padding: 8px 15px; border-radius: 4px; }
-    </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#070707"/>
+<title>LuggyBoy – Smart Porter Booking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
+<script>
+/* ════════════════════════════════════════════
+   CONFIG  —  edit only this block
+════════════════════════════════════════════ */
+window.CFG = {
+  API_BASE : 'https://luggyboy.onrender.com/api',   // ← change to your server URL after deploy
+  MAPS_KEY   : 'AIzaSyAQ1CaIw3LMsDAAXHkkHkjEYsupv2ktt2Q',    // ← Google Cloud Console
+  ADMIN_WA   : '916267293870',                // ← your WhatsApp
+  COUPONS    : { 'FIRST50':30, 'LUGGY20':20, 'STARTUP':50 }, // mirrors server
+};
+</script>
+
+<style>
+/* ════════ DESIGN TOKENS ════════ */
+:root{
+  --y:#FFD600;--y2:rgba(255,214,0,.09);--y3:rgba(255,214,0,.18);
+  --bk:#070707;--bk2:#0f0f0f;--bk3:#181818;--bk4:#222;
+  --wh:#fff;--gr:#666;--green:#22C55E;--gd:rgba(34,197,94,.08);
+  --red:#FF4444;--blue:#60A5FA;
+  --r:16px;--r2:10px;--r3:6px;
+  --sh:0 24px 60px rgba(0,0,0,.7);
+  --tr:all .22s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
+body{background:var(--bk);color:var(--wh);font-family:'Outfit',sans-serif;overflow-x:hidden;cursor:none;min-height:100vh}
+@media(hover:none){body{cursor:auto}}
+
+/* ── CURSOR ── */
+#cur,#cur-r{position:fixed;top:0;left:0;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .18s,height .18s}
+#cur{width:10px;height:10px;background:var(--y)}
+#cur-r{width:30px;height:30px;border:1.5px solid rgba(255,214,0,.25)}
+body:has(button:hover) #cur,body:has(a:hover) #cur{width:15px;height:15px;opacity:.7}
+@media(hover:none){#cur,#cur-r{display:none}}
+
+/* ── NOISE ── */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.025;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ════════ NAV ════════ */
+nav{position:fixed;top:0;inset-inline:0;z-index:300;display:flex;align-items:center;
+  justify-content:space-between;padding:13px 5%;
+  background:rgba(7,7,7,.94);backdrop-filter:blur(22px);border-bottom:1px solid #1a1a1a}
+.logo{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--wh);
+  font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:-.5px}
+.logo-box{width:30px;height:30px;background:var(--y);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.logo span{color:var(--y)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-links{display:flex;gap:22px;list-style:none}
+.nav-links a{color:var(--gr);font-size:.82rem;text-decoration:none;font-weight:500;transition:color .2s}
+.nav-links a:hover{color:var(--y)}
+.net-on{display:flex;align-items:center;gap:5px;background:var(--gd);border:1px solid rgba(34,197,94,.2);color:var(--green);font-size:.67rem;font-weight:700;padding:5px 10px;border-radius:40px}
+.net-off{display:flex;align-items:center;gap:5px;background:rgba(255,68,68,.07);border:1px solid rgba(255,68,68,.18);color:var(--red);font-size:.67rem;font-weight:700;padding:5px 10px;border-radius:40px}
+.net-dot{width:5px;height:5px;border-radius:50%;animation:blink 1.3s infinite}
+.btn-nav{background:var(--y);color:var(--bk);font-weight:700;font-size:.78rem;padding:8px 16px;border-radius:40px;border:none;cursor:pointer;font-family:'Outfit',sans-serif;transition:var(--tr);letter-spacing:.3px}
+.btn-nav:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(255,214,0,.28)}
+.btn-sb{background:none;border:1px solid #2a2a2a;border-radius:8px;padding:7px 10px;cursor:pointer;color:var(--gr);font-size:1rem;transition:var(--tr)}
+.btn-sb:hover{border-color:#444;color:var(--wh)}
+.hbg{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:4px}
+.hbg span{display:block;width:20px;height:2px;background:var(--wh);border-radius:2px;transition:all .3s}
+
+/* ════════ OFFLINE BAR ════════ */
+.offline-bar{display:none;position:fixed;top:58px;left:0;right:0;z-index:350;
+  background:var(--red);color:var(--wh);font-size:.75rem;font-weight:700;text-align:center;padding:7px;letter-spacing:.5px}
+.offline-bar.show{display:block}
+
+/* ════════ SIDEBAR ════════ */
+.sb-ov{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:490;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;backdrop-filter:blur(6px)}
+.sb-ov.on{opacity:1;visibility:visible}
+.sb{position:fixed;top:0;right:0;bottom:0;width:290px;z-index:495;background:var(--bk2);
+  border-left:1px solid #1e1e1e;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+.sb.on{transform:translateX(0)}
+.sb-head{padding:18px 20px;border-bottom:1px solid #1a1a1a;display:flex;align-items:center;justify-content:space-between}
+.sb-logo{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800}.sb-logo span{color:var(--y)}
+.sb-close{background:none;border:1px solid #2a2a2a;border-radius:7px;color:var(--gr);padding:5px 9px;cursor:pointer;font-size:.82rem;transition:var(--tr)}
+.sb-close:hover{border-color:#444;color:var(--wh)}
+.sb-prof{padding:14px 20px;border-bottom:1px solid #1a1a1a;background:var(--bk3);cursor:pointer}
+.sb-av{width:42px;height:42px;border-radius:50%;background:var(--y2);border:2px solid rgba(255,214,0,.2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:9px}
+.sb-name{font-weight:700;font-size:.92rem;margin-bottom:2px}.sb-ph{font-size:.74rem;color:var(--gr);font-weight:300}
+.sb-ref-box{display:flex;align-items:center;gap:8px;background:var(--bk4);border-radius:var(--r3);padding:7px 9px;margin-top:9px}
+.srl{font-size:.62rem;color:var(--gr);font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.src{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:800;color:var(--y)}
+.src-copy{background:none;border:none;cursor:pointer;color:var(--y);font-size:.72rem;padding:2px 6px;border-radius:4px;background:var(--y2);font-weight:600;font-family:'Outfit',sans-serif;margin-left:auto}
+.sb-nav{flex:1;overflow-y:auto;padding:6px 0}
+.sbi{display:flex;align-items:center;gap:11px;padding:13px 20px;cursor:pointer;transition:background .2s;border:none;background:none;width:100%;text-align:left;color:var(--wh)}
+.sbi:hover{background:var(--bk3)}
+.sbi-ico{width:34px;height:34px;background:var(--bk3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
+.sbi:hover .sbi-ico{background:var(--bk4)}
+.sbi-lbl{font-size:.86rem;font-weight:600}.sbi-sub{font-size:.7rem;color:var(--gr);margin-top:1px;font-weight:300}
+.sbi-badge{margin-left:auto;background:var(--y);color:var(--bk);font-size:.58rem;font-weight:800;padding:2px 6px;border-radius:40px}
+.sb-foot{padding:14px 20px;border-top:1px solid #1a1a1a}
+.btn-logout{width:100%;background:none;border:1px solid #2a2a2a;color:var(--gr);font-family:'Outfit',sans-serif;font-size:.8rem;font-weight:500;padding:9px;border-radius:var(--r2);cursor:pointer;transition:var(--tr)}
+.btn-logout:hover{border-color:#FF444440;color:var(--red)}
+
+/* ════════ SCREENS ════════ */
+.screen{display:none;min-height:100vh}.screen.active{display:block}
+
+/* ════════ LOGIN SCREEN ════════ */
+#s-login{display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden;min-height:100vh}
+.login-glow{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(255,214,0,.06) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+.login-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);background-size:50px 50px}
+.login-card{background:var(--bk2);border:1.5px solid #222;border-radius:20px;padding:38px 34px;max-width:390px;width:100%;position:relative;z-index:1;box-shadow:var(--sh);animation:fiu .6s ease both}
+.lc-logo{display:flex;align-items:center;gap:8px;margin-bottom:26px;font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800}
+.lc-logo .lb{width:30px;height:30px;background:var(--y);border-radius:7px;display:flex;align-items:center;justify-content:center}
+.lc-logo span{color:var(--y)}
+.login-card h2{font-family:'Syne',sans-serif;font-size:1.65rem;font-weight:800;letter-spacing:-.5px;margin-bottom:5px}
+.lsub{font-size:.83rem;color:var(--gr);margin-bottom:22px;font-weight:300;line-height:1.6}
+.lstep{display:none}.lstep.on{display:block}
+.lfl{font-size:.66rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#555;margin-bottom:5px}
+.lfi{width:100%;background:var(--bk3);border:1.5px solid #252525;border-radius:var(--r2);padding:13px 14px;color:var(--wh);font-family:'Outfit',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s;letter-spacing:1px}
+.lfi:focus{border-color:var(--y);background:#14120a}
+.lfi::placeholder{color:#383838;letter-spacing:0}
+.lf-hint{font-size:.72rem;color:#555;margin-top:5px;font-weight:300}
+.otp-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px; 
+  margin: 20px 0;
+}
+.obox {
+  width: 45px; 
+  height: 50px; 
+  background: var(--bk3);
+  border: 1.5px solid #252525;
+  border-radius: var(--r2);
+  color: var(--wh);
+  font-family: 'Syne', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+  transition: border-color .2s;
+  caret-color: var(--y);
+  padding: 0;
+  flex-shrink: 0; 
+}
+.obox:focus {
+  border-color: var(--y);
+}
+.otp-resend{font-size:.73rem;color:#555;text-align:right;margin-top:5px}
+.otp-resend button{background:none;border:none;color:var(--y);cursor:pointer;font-family:'Outfit',sans-serif;font-size:.73rem;font-weight:600}
+.btn-full{width:100%;background:var(--y);color:var(--bk);font-family:'Syne',sans-serif;font-size:.98rem;font-weight:800;letter-spacing:.8px;padding:14px;border:none;border-radius:var(--r2);cursor:pointer;margin-top:15px;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
+.btn-full:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(255,214,0,.3)}
+.btn-full:active{transform:translateY(0)}
+.btn-full:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-full::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);transform:translateX(-100%);transition:transform .5s}
+.btn-full:not(:disabled):hover::before{transform:translateX(100%)}
+.ldivider{display:flex;align-items:center;gap:10px;margin:16px 0;color:#333;font-size:.74rem}
+.ldivider::before,.ldivider::after{content:'';flex:1;height:1px;background:#1e1e1e}
+.btn-skip{width:100%;background:none;border:1px solid #252525;color:#666;font-family:'Outfit',sans-serif;font-size:.83rem;font-weight:500;padding:11px;border-radius:var(--r2);cursor:pointer;transition:var(--tr)}
+.btn-skip:hover{border-color:#383838;color:#999}
+.api-status{display:flex;align-items:center;gap:6px;font-size:.7rem;color:#555;margin-top:12px;padding:8px 10px;background:var(--bk3);border-radius:var(--r3)}
+.api-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.api-dot.ok{background:var(--green)}.api-dot.err{background:var(--red)}.api-dot.chk{background:#888;animation:blink 1s infinite}
+
+/* ════════ MAIN SCREEN ════════ */
+#s-main{padding-top:58px}
+.nobargain-bar{background:var(--y);color:var(--bk);font-weight:700;font-size:.77rem;letter-spacing:.5px;text-align:center;padding:8px 5%;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+
+.hero{display:grid;grid-template-columns:1fr 1.08fr;gap:26px;align-items:start;padding:18px 5% 56px;position:relative;overflow:hidden}
+@media(max-width:960px){.hero{grid-template-columns:1fr;padding-top:14px}}
+.h-glow{position:absolute;width:560px;height:560px;border-radius:50%;top:-60px;right:-80px;background:radial-gradient(circle,rgba(255,214,0,.055) 0%,transparent 70%);pointer-events:none;animation:gp 7s ease-in-out infinite}
+@keyframes gp{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.9;transform:scale(1.04)}}
+.h-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);background-size:50px 50px}
+.hl{position:relative;z-index:1}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--y2);border:1px solid rgba(255,214,0,.2);color:var(--y);font-size:.64rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:5px 12px;border-radius:40px;margin-bottom:16px;animation:fiu .6s ease both}
+.chip-dot{width:5px;height:5px;background:var(--y);border-radius:50%;animation:blink 1.5s infinite}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.6rem,5.5vw,4.5rem);font-weight:800;line-height:.96;letter-spacing:-2px;margin-bottom:13px;animation:fiu .7s .1s ease both}
+.hero h1 em{font-style:normal;color:var(--y);display:block}
+.hero-sub{font-size:.9rem;color:#999;max-width:370px;line-height:1.75;margin-bottom:20px;animation:fiu .7s .2s ease both;font-weight:300}
+.trust-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px;animation:fiu .7s .3s ease both}
+.tp{display:flex;align-items:center;gap:5px;background:var(--bk3);border:1px solid var(--bk4);border-radius:40px;padding:5px 11px;font-size:.68rem;font-weight:600;color:#ccc}
+.tpd{width:5px;height:5px;border-radius:50%}
+.tpd.g{background:var(--green)}.tpd.y{background:var(--y)}.tpd.b{background:var(--blue)}
+
+/* ════════ BOOKING CARD ════════ */
+.bcard{background:var(--bk2);border:1.5px solid #222;border-radius:var(--r);padding:22px;box-shadow:var(--sh);animation:fiu .7s .35s ease both;position:relative;z-index:1}
+.bc-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.bc-tag{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--y)}
+.bc-eta{display:flex;align-items:center;gap:5px;font-size:.67rem;color:var(--green);font-weight:600}
+.etad{width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 1.2s infinite}
+.fw{position:relative;margin-bottom:8px}
+.fw .fi{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:.85rem;opacity:.38;pointer-events:none;z-index:1}
+.fw input,.fw select{width:100%;background:var(--bk3);border:1.5px solid #222;border-radius:var(--r2);padding:11px 11px 11px 35px;color:var(--wh);font-family:'Outfit',sans-serif;font-size:.83rem;outline:none;transition:border-color .2s,background .2s;appearance:none}
+.fw input::placeholder{color:#3a3a3a}
+.fw input:focus,.fw select:focus{border-color:var(--y);background:#14120a}
+.fw select option{background:var(--bk3)}
+.fw input[readonly]{cursor:pointer}
+.gps-btn{position:absolute;right:7px;top:50%;transform:translateY(-50%);background:var(--y2);border:none;border-radius:5px;color:var(--y);font-size:.67rem;padding:4px 7px;cursor:pointer;font-weight:700;font-family:'Outfit',sans-serif;transition:background .2s;white-space:nowrap}
+.gps-btn:hover{background:var(--y3)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+@media(max-width:480px){.row2{grid-template-columns:1fr}}
+
+/* coupon */
+.coup-row{display:flex;gap:7px;margin-bottom:8px}
+.coup-in{flex:1;background:var(--bk3);border:1.5px solid #222;border-radius:var(--r2);padding:10px 12px;color:var(--wh);font-family:'Outfit',sans-serif;font-size:.82rem;outline:none;transition:border-color .2s;text-transform:uppercase;letter-spacing:1px}
+.coup-in::placeholder{letter-spacing:0;color:#3a3a3a;text-transform:none}
+.coup-in:focus{border-color:var(--y)}
+.coup-apply{background:var(--y2);border:1px solid rgba(255,214,0,.22);color:var(--y);font-family:'Outfit',sans-serif;font-size:.77rem;font-weight:700;padding:10px 12px;border-radius:var(--r2);cursor:pointer;white-space:nowrap;transition:background .2s}
+.coup-apply:hover{background:var(--y3)}
+.coup-tag{display:none;align-items:center;gap:6px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.18);border-radius:var(--r2);padding:7px 11px;margin-bottom:8px;font-size:.74rem;color:var(--green);font-weight:600}
+.coup-tag.show{display:flex}
+.coup-rm{background:none;border:none;cursor:pointer;color:rgba(34,197,94,.5);font-size:.73rem;margin-left:auto}
+
+/* price strip */
+.pstrip{background:var(--bk3);border:1px solid #242424;border-radius:var(--r2);padding:11px 13px;margin:8px 0;display:flex;align-items:center;justify-content:space-between}
+.psl .pl{font-size:.61rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#555}
+.psl .pb{font-size:.66rem;color:#383838;margin-top:2px}
+.psr{text-align:right}
+.pv{font-family:'Syne',sans-serif;font-size:1.65rem;font-weight:800;color:var(--y);line-height:1;transition:all .3s cubic-bezier(.34,1.56,.64,1)}
+.pv .orig{font-size:.88rem;color:#555;text-decoration:line-through;margin-right:5px}
+.pdist{font-size:.66rem;color:#555;margin-top:2px}
+.pdist span{color:#777;font-weight:600}
+
+/* ETA strip */
+.eta-strip{background:var(--bk3);border:1px solid #242424;border-radius:var(--r2);padding:9px 13px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.eta-l{font-size:.67rem;color:#555;font-weight:300}.eta-r{display:flex;align-items:center;gap:5px;font-size:.74rem;font-weight:700;color:var(--green)}
+
+/* porter count pill */
+.p-avail{display:flex;align-items:center;gap:6px;font-size:.67rem;color:#666;margin-bottom:8px;padding:0 2px}
+.pad{width:6px;height:6px;background:var(--green);border-radius:50%;flex-shrink:0;animation:blink 1.4s infinite}
+
+/* book button */
+.btn-book{width:100%;background:var(--y);color:var(--bk);font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;letter-spacing:.8px;padding:15px;border:none;border-radius:var(--r2);cursor:pointer;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-book::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);transform:translateX(-100%);transition:transform .5s}
+.btn-book:not(:disabled):hover::before{transform:translateX(100%)}
+.btn-book:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(255,214,0,.35)}
+.btn-book:active{transform:translateY(0)}
+.btn-book:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.map-hint{font-size:.64rem;color:#444;margin-top:6px;padding:0 2px;display:flex;align-items:center;gap:4px}
+.map-hint b{color:var(--y)}
+
+/* ════════ MAP ════════ */
+.map-panel{background:var(--bk2);border:1.5px solid #1c1c1c;border-radius:var(--r);overflow:hidden;position:relative;z-index:1}
+#map{width:100%;height:420px}
+.map-top{position:absolute;top:10px;left:10px;right:10px;z-index:10;display:flex;gap:7px;flex-wrap:wrap;pointer-events:none}
+.mbadge{background:rgba(7,7,7,.88);backdrop-filter:blur(10px);border:1px solid #2a2a2a;border-radius:40px;padding:5px 11px;font-size:.65rem;font-weight:600;pointer-events:all}
+.mbadge.g{color:var(--green);border-color:rgba(34,197,94,.18)}.mbadge.y{color:var(--y);border-color:rgba(255,214,0,.18)}.mbadge.b{color:var(--blue);border-color:rgba(96,165,250,.18)}
+.map-instr{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(7,7,7,.9);backdrop-filter:blur(10px);border:1px solid rgba(255,214,0,.2);color:var(--y);font-size:.66rem;font-weight:700;letter-spacing:.5px;padding:7px 14px;border-radius:40px;z-index:10;white-space:nowrap;animation:fiu 1s 1s ease both}
+.map-ph{width:100%;height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#2e2e2e;text-align:center;padding:20px}
+.map-ph .mph{font-size:2.3rem;filter:grayscale(1);opacity:.14}
+.map-ph h4{font-size:.85rem;font-weight:600;color:#383838}
+.map-ph p{font-size:.73rem;color:#2c2c2c;line-height:1.7;max-width:240px}
+.map-ph a{color:var(--y);text-decoration:none;font-weight:600}
+.map-ph code{background:var(--bk4);padding:2px 5px;border-radius:4px;font-size:.68rem;color:#aaa}
+
+/* ════════ TICKER ════════ */
+.ticker{background:var(--bk3);border-top:1px solid #181818;border-bottom:1px solid #181818;padding:10px 5%;display:flex;align-items:center;gap:12px;overflow:hidden}
+.t-lbl{font-size:.61rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--y);white-space:nowrap;display:flex;align-items:center;gap:5px;flex-shrink:0}
+.t-lbl::before{content:'●';font-size:.4rem;animation:blink 1.2s infinite}
+.t-track{display:flex;gap:26px;animation:scroll 26s linear infinite;white-space:nowrap}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.t-item{display:flex;align-items:center;gap:5px;font-size:.73rem;color:#666}
+.t-item strong{color:#bbb}
+
+/* ════════ SECTION SHARED ════════ */
+.sec{padding:68px 5%}.sec.alt{background:var(--bk2)}
+.stag{font-size:.61rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--y);margin-bottom:8px}
+.stitle{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,4vw,2.75rem);font-weight:800;letter-spacing:-1px;line-height:1.06;margin-bottom:10px}
+.ssub{color:#777;font-size:.87rem;line-height:1.75;max-width:440px;font-weight:300}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:2px;margin-top:36px;border:1px solid #1c1c1c;border-radius:var(--r);overflow:hidden}
+.step{background:var(--bk3);padding:24px 20px;position:relative;transition:background .2s}
+.step:hover{background:#1d1d1d}
+.snum{font-family:'Syne',sans-serif;font-size:3.8rem;font-weight:800;color:rgba(255,214,0,.04);line-height:1;position:absolute;right:10px;top:6px}
+.s-ico{width:45px;height:45px;background:var(--y2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;margin-bottom:13px;transition:background .2s,transform .2s}
+.step:hover .s-ico{background:var(--y3);transform:scale(1.07)}
+.step h4{font-weight:700;margin-bottom:5px;font-size:.87rem}
+.step p{font-size:.75rem;color:#666;line-height:1.68;font-weight:300}
+
+/* pricing */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:36px}
+.pc{background:var(--bk2);border:1.5px solid #1e1e1e;border-radius:var(--r);padding:22px 18px;position:relative;transition:transform .22s,border-color .22s}
+.pc:hover{transform:translateY(-4px);border-color:#2a2a2a}
+.pc.hot{border-color:var(--y);background:linear-gradient(145deg,rgba(255,214,0,.04),var(--bk2))}
+.hot-tag{position:absolute;top:-10px;left:16px;background:var(--y);color:var(--bk);font-size:.58rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:40px}
+.pc-km{font-size:.63rem;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.pc-amt{font-family:'Syne',sans-serif;font-size:2.6rem;font-weight:800;color:var(--y);line-height:1}
+.pc-amt sup{font-size:1rem;vertical-align:super;color:#888}
+.pc-note{margin-top:7px;font-size:.75rem;color:#666;line-height:1.6;font-weight:300}
+.pc-list{list-style:none;margin-top:13px}
+.pc-list li{font-size:.73rem;color:#888;padding:5px 0;border-bottom:1px solid #161616;display:flex;align-items:center;gap:5px}
+.pc-list li::before{content:'✓';color:var(--y);font-weight:700}
+.formula{background:var(--bk2);border:1px solid #1c1c1c;border-radius:var(--r);padding:17px 22px;margin-top:22px;display:flex;flex-wrap:wrap;align-items:center;gap:15px}
+.fb .fl{font-size:.59rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#3a3a3a;margin-bottom:4px}
+.fb .fe{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--wh)}
+.fb .fe em{font-style:normal;color:var(--y)}
+.fdiv{width:1px;height:30px;background:#1e1e1e;flex-shrink:0}
+
+/* porter roster */
+.rf-btns{display:flex;gap:7px;margin-bottom:16px;flex-wrap:wrap}
+.rf-btn{background:var(--bk3);border:1.5px solid #222;border-radius:40px;color:var(--gr);font-family:'Outfit',sans-serif;font-size:.73rem;font-weight:600;padding:5px 13px;cursor:pointer;transition:var(--tr)}
+.rf-btn.active{background:var(--y2);border-color:rgba(255,214,0,.26);color:var(--y)}
+.pgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:11px}
+.pcard{background:var(--bk2);border:1.5px solid #1c1c1c;border-radius:var(--r);padding:18px 14px;text-align:center;position:relative;transition:border-color .22s,transform .22s}
+.pcard:hover{border-color:rgba(255,214,0,.2);transform:translateY(-3px)}
+.pcard.off{opacity:.42;filter:grayscale(.6)}
+.p-st{position:absolute;top:9px;right:9px;font-size:.57rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 7px;border-radius:40px}
+.p-st.on{background:rgba(34,197,94,.09);color:var(--green);border:1px solid rgba(34,197,94,.16)}
+.p-st.off{background:rgba(255,68,68,.07);color:#FF6666;border:1px solid rgba(255,68,68,.12)}
+.pav{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--bk4),var(--bk3));display:flex;align-items:center;justify-content:center;font-size:1.25rem;margin:0 auto 10px;border:2px solid #242424}
+.pname{font-weight:700;font-size:.85rem;margin-bottom:2px}
+.parea{font-size:.67rem;color:#666;margin-bottom:7px;font-weight:300}
+.pstars{color:var(--y);font-size:.72rem;margin-bottom:4px}
+.ptrips{font-size:.67rem;color:#555}
+
+/* become porter */
+.pg{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:start;margin-top:36px}
+@media(max-width:768px){.pg{grid-template-columns:1fr}}
+.perks{display:flex;flex-direction:column;gap:10px}
+.perk{background:var(--bk3);border:1px solid #202020;border-radius:var(--r2);padding:12px 14px;display:flex;align-items:center;gap:10px;transition:var(--tr)}
+.perk:hover{border-color:#2c2c2c;transform:translateX(3px)}
+.pi{width:37px;height:37px;flex-shrink:0;background:var(--y2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.05rem}
+.perk h5{font-weight:700;font-size:.82rem;margin-bottom:2px}
+.perk p{font-size:.71rem;color:#666;font-weight:300;line-height:1.5}
+.pstats-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}
+.pstat{background:var(--bk3);border:1px solid #202020;border-radius:var(--r2);padding:12px}
+.pstat .sn{font-family:'Syne',sans-serif;font-size:1.75rem;font-weight:800;color:var(--y);line-height:1}
+.pstat .sl{font-size:.66rem;color:#555;margin-top:2px;font-weight:300}
+
+.pform{background:var(--bk3);border:1px solid #202020;border-radius:var(--r);padding:24px}
+.pform h3{font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
+.pform .psub{font-size:.76rem;color:#666;margin-bottom:15px;font-weight:300}
+.ff{margin-bottom:10px}
+.ff label{display:block;font-size:.63rem;font-weight:700;letter-spacing:.8px;color:#555;text-transform:uppercase;margin-bottom:5px}
+.ff input,.ff select,.ff textarea{width:100%;background:var(--bk2);border:1.5px solid #222;border-radius:var(--r2);padding:10px 13px;color:var(--wh);font-family:'Outfit',sans-serif;font-size:.82rem;outline:none;transition:border-color .2s;appearance:none}
+.ff input::placeholder,.ff textarea::placeholder{color:#383838}
+.ff input:focus,.ff select:focus,.ff textarea:focus{border-color:var(--y)}
+.ff textarea{resize:vertical;min-height:64px}
+.btn-join{width:100%;background:var(--y);color:var(--bk);font-family:'Syne',sans-serif;font-size:.88rem;font-weight:800;letter-spacing:.8px;padding:13px;border:none;border-radius:var(--r2);cursor:pointer;margin-top:3px;transition:transform .15s,box-shadow .15s}
+.btn-join:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(255,214,0,.24)}
+
+/* contact */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:36px}
+.ccard{background:var(--bk3);border:1.5px solid #1c1c1c;border-radius:var(--r);padding:18px 14px;display:flex;align-items:flex-start;gap:10px;transition:var(--tr)}
+.ccard:hover{border-color:rgba(255,214,0,.18);transform:translateY(-3px)}
+.cico{width:38px;height:38px;flex-shrink:0;background:var(--y2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem}
+.ccard h4{font-weight:700;font-size:.85rem;margin-bottom:3px}
+.ccard p{font-size:.74rem;color:#777;line-height:1.6;font-weight:300}
+.ccard a{color:var(--y);text-decoration:none;font-weight:600}
+.ccard a:hover{text-decoration:underline}
+
+/* footer */
+footer{background:var(--bk2);border-top:1px solid #131313;padding:38px 5% 20px}
+.ft{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:30px;padding-bottom:28px;border-bottom:1px solid #131313}
+@media(max-width:900px){.ft{grid-template-columns:1fr 1fr}}
+@media(max-width:540px){.ft{grid-template-columns:1fr}}
+.fb2 p{font-size:.75rem;color:#555;margin-top:9px;line-height:1.7;font-weight:300}
+.fc h5{font-size:.61rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#363636;margin-bottom:10px}
+.fc a{display:block;font-size:.75rem;color:#555;text-decoration:none;margin-bottom:6px;font-weight:300;transition:color .2s}
+.fc a:hover{color:var(--y)}
+.fbot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-top:18px}
+.copy{font-size:.67rem;color:#2c2c2c}
+.wa-ft{display:flex;align-items:center;gap:6px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.12);color:var(--green);font-size:.71rem;font-weight:600;padding:6px 13px;border-radius:40px;text-decoration:none;transition:background .2s}
+.wa-ft:hover{background:rgba(34,197,94,.13)}
+
+/* ════════ MY BOOKINGS SCREEN ════════ */
+#s-bookings { padding: 80px 5% 40px; }
+#s-bookings h2 { color:var(--y); text-transform:uppercase; font-weight:800; font-size:1.5rem; margin-bottom:20px; }
+#history-list { display: flex; flex-direction: column; gap: 11px; }
+
+/* ════════ MODALS ════════ */
+.ov{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.9);backdrop-filter:blur(14px);align-items:center;justify-content:center;padding:14px}
+.ov.on{display:flex}
+.modal{background:var(--bk2);border:1.5px solid #262626;border-radius:var(--r);padding:32px 26px;text-align:center;max-width:385px;width:100%;animation:mi .32s cubic-bezier(.34,1.56,.64,1) both;overflow-y:auto;max-height:90vh}
+@keyframes mi{from{transform:scale(.82);opacity:0}to{transform:scale(1);opacity:1}}
+.m-ico{font-size:2.8rem;line-height:1;margin-bottom:11px}
+.modal h3{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--y);letter-spacing:-.5px;margin-bottom:7px}
+.modal p{font-size:.8rem;color:#888;line-height:1.7;margin-bottom:15px;font-weight:300}
+.m-bid{background:var(--bk3);border:1px solid #222;border-radius:7px;padding:9px 13px;margin-bottom:13px;font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--y);letter-spacing:2px}
+.m-dtl{background:var(--bk3);border:1px solid #1c1c1c;border-radius:var(--r2);padding:11px 13px;margin-bottom:13px;text-align:left}
+.mrow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:.74rem;border-bottom:1px solid #1c1c1c}
+.mrow:last-child{border:none}
+.mk{color:#666;font-weight:300}.mv{color:var(--wh);font-weight:600;text-align:right;max-width:58%}
+.mv.y{color:var(--y)}.mv.g{color:var(--green)}
+.dispatch-box{background:rgba(255,214,0,.05);border:1px solid rgba(255,214,0,.13);border-radius:var(--r2);padding:11px 13px;margin-bottom:13px;text-align:left}
+.db-lbl{font-size:.6rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--y);margin-bottom:6px}
+.db-row{font-size:.73rem;color:#aaa;margin-bottom:3px;font-weight:300}.db-row strong{color:var(--wh)}
+.m-wa{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;background:var(--green);color:var(--bk);font-family:'Syne',sans-serif;font-size:.88rem;font-weight:800;padding:12px;border:none;border-radius:var(--r2);cursor:pointer;text-decoration:none;margin-bottom:7px;transition:transform .15s,opacity .15s}
+.m-wa:hover{transform:translateY(-2px);opacity:.9}
+.m-call{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;background:var(--y2);color:var(--y);font-family:'Syne',sans-serif;font-size:.84rem;font-weight:700;padding:11px;border:1.5px solid rgba(255,214,0,.2);border-radius:var(--r2);cursor:pointer;text-decoration:none;margin-bottom:7px;transition:var(--tr)}
+.m-call:hover{background:var(--y3)}
+.m-close{background:none;border:1px solid #262626;color:#666;font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:500;padding:9px 22px;border-radius:40px;cursor:pointer;transition:var(--tr)}
+.m-close:hover{border-color:#383838;color:#aaa}
+.accept-list{margin:11px 0;max-height:165px;overflow-y:auto;text-align:left}
+.ai{background:var(--bk3);border:1px solid #1e1e1e;border-radius:var(--r2);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ai-l{display:flex;align-items:center;gap:8px}
+.ai-av{width:30px;height:30px;border-radius:50%;background:var(--bk4);display:flex;align-items:center;justify-content:center;font-size:.85rem}
+.ai-nm{font-size:.79rem;font-weight:700}.ai-sub{font-size:.67rem;color:#666}
+.btn-assign{background:var(--y);color:var(--bk);font-family:'Syne',sans-serif;font-size:.68rem;font-weight:800;letter-spacing:.3px;padding:5px 10px;border:none;border-radius:40px;cursor:pointer;white-space:nowrap;transition:opacity .2s}
+.btn-assign:hover{opacity:.85}
+/* feedback */
+.star-row{display:flex;gap:9px;justify-content:center;margin:12px 0}
+.sb{background:none;border:none;font-size:1.9rem;cursor:pointer;transition:transform .15s;color:#333}
+.sb.lit{color:var(--y)}.sb:hover{transform:scale(1.15)}
+.fb-ta{width:100%;background:var(--bk3);border:1.5px solid #222;border-radius:var(--r2);padding:10px 12px;color:var(--wh);font-family:'Outfit',sans-serif;font-size:.82rem;outline:none;resize:none;height:74px;transition:border-color .2s;margin-bottom:11px}
+.fb-ta:focus{border-color:var(--y)}.fb-ta::placeholder{color:#383838}
+
+/* ════════ LOADER ════════ */
+.loader-ov{position:fixed;inset:0;z-index:800;background:rgba(7,7,7,.93);backdrop-filter:blur(16px);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.loader-ov.on{display:flex}
+.loader-ring{width:50px;height:50px;border:3px solid #222;border-top-color:var(--y);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:var(--y);letter-spacing:1px}
+.loader-sub{font-size:.73rem;color:#666;font-weight:300}
+
+/* ════════ TOAST ════════ */
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--bk3);border:1px solid #282828;border-radius:40px;padding:9px 16px;font-size:.76rem;font-weight:500;display:flex;align-items:center;gap:6px;z-index:700;transition:transform .32s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 10px 28px rgba(0,0,0,.5)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.g{border-color:rgba(34,197,94,.26);color:var(--green)}.toast.y{border-color:rgba(255,214,0,.26);color:var(--y)}.toast.r{border-color:rgba(255,68,68,.26);color:var(--red)}
+
+/* ════════ REVEAL ════════ */
+.rv{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}.rv.vis{opacity:1;transform:translateY(0)}
+@keyframes fiu{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+</style>
 </head>
 <body>
-    <h1>🧳 LuggyBoy Business Control</h1>
 
-    <div class="card">
-        <div class="stat-box" id="totalB">Total: 0</div>
-        <div class="stat-box" id="revB">Revenue: ₹0</div>
-        <button onclick="loadData()">🔄 Refresh Data</button>
+<div id="cur"></div><div id="cur-r"></div>
+<div class="offline-bar" id="offline-bar">📵 No internet — check your connection</div>
+<div class="loader-ov" id="loader"><div class="loader-ring"></div><div class="loader-text">DISPATCHING</div><div class="loader-sub" id="loader-sub">Connecting to backend...</div></div>
+
+<nav>
+  <a class="logo" href="#" onclick="goS('main')"><div class="logo-box">🧳</div>Luggy<span>Boy</span></a>
+  <ul class="nav-links" id="nl">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#porters">Porters</a></li>
+    <li><a href="#join">Join Us</a></li>
+  </ul>
+  <div class="nav-right">
+    <div id="net-badge" class="net-on"><div class="net-dot" style="background:var(--green)"></div>Online</div>
+    <div id="nav-auth"></div>
+    <button class="btn-sb" onclick="openSB()">☰</button>
+    <button class="hbg" onclick="document.getElementById('nl').classList.toggle('open')"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<div class="sb-ov" id="sbov" onclick="closeSB()"></div>
+<div class="sb" id="sb">
+  <div class="sb-head">
+    <div class="sb-logo">Luggy<span>Boy</span></div>
+    <button class="sb-close" onclick="closeSB()">✕ Close</button>
+  </div>
+  <div id="sb-prof"></div>
+  <div class="sb-nav">
+  <button class="sbi" onclick="closeSB();goS('main')"><div class="sbi-ico">🏠</div><div><div class="sbi-lbl">Home</div><div class="sbi-sub">Book a porter</div></div></button>
+  <button class="sbi" onclick="closeSB();goS('bookings');loadMyBookings()"><div class="sbi-ico">📋</div><div><div class="sbi-lbl">My Bookings</div><div class="sbi-sub">History & status</div></div><span class="sbi-badge" id="sb-cnt">0</span></button>
+  <button class="sbi" onclick="closeSB();openModal('referModal')"><div class="sbi-ico">🎁</div><div><div class="sbi-lbl">Refer & Earn</div><div class="sbi-sub">₹20 per referral</div></div></button>
+  <button class="sbi" onclick="closeSB();window.open('https://wa.me/'+CFG.ADMIN_WA,'_blank')"><div class="sbi-ico">💬</div><div><div class="sbi-lbl">Support</div><div class="sbi-sub">WhatsApp — 2 min reply</div></div></button>
+  <button class="sbi" onclick="closeSB();document.getElementById('join').scrollIntoView({behavior:'smooth'})"><div class="sbi-ico">🧑‍💼</div><div><div class="sbi-lbl">Become a Porter</div><div class="sbi-sub">Earn ₹600–1200/day</div></div></button>
+
+  <div style="border-top: 1.5px dashed #333; margin: 10px 15px;"></div>
+
+  <button class="sbi" onclick="closeSB();openAssignModal()"><div class="sbi-ico">⚡</div><div><div class="sbi-lbl">Assign Porter</div><div class="sbi-sub">Admin Action</div></div></button>
+  <button class="sbi" onclick="closeSB();enterStartOtp()"><div class="sbi-ico">🔑</div><div><div class="sbi-lbl">Start Service</div><div class="sbi-sub">Enter Customer OTP</div></div></button>
+  <button class="sbi" onclick="closeSB();endTrip()"><div class="sbi-ico">🧾</div><div><div class="sbi-lbl">End Trip</div><div class="sbi-sub">Generate Final Bill</div></div></button>
+  </div>
+  <div class="sb-foot"><button class="btn-logout" id="sb-logout" onclick="logout()">Sign Out</button></div>
+</div>
+
+<div id="s-login" class="screen active">
+  <div class="login-glow"></div><div class="login-grid"></div>
+  <div class="login-card">
+    <div class="lc-logo"><div class="lb">🧳</div>Luggy<span>Boy</span></div>
+    <h2>Welcome 👋</h2>
+    <p class="lsub">Enter your phone to book a porter instantly — no password needed.</p>
+    <div id="api-check" class="api-status"><div class="api-dot chk" id="api-dot"></div><span id="api-txt">Checking backend...</span></div>
+    <div class="lstep on" id="ls1">
+      <div class="lfl">Mobile Number</div>
+      <div style="position:relative">
+        <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#666;font-size:.88rem">+91</span>
+        <input class="lfi" id="ph-in" type="tel" maxlength="10" placeholder="9876543210" style="padding-left:42px" oninput="this.value=this.value.replace(/\D/g,'')" onkeydown="if(event.key==='Enter')sendOTP()"/>
+      </div>
+      <div class="lf-hint">OTP will be sent via WhatsApp</div>
+      <button class="btn-full" onclick="sendOTP()">GET OTP →</button>
+      <div class="ldivider">or</div>
+      <button class="btn-skip" onclick="skipLogin()">Explore first — skip for now</button>
     </div>
+    <div class="lstep" id="ls2">
+      <div class="lfl">OTP sent to +91 <span id="otp-ph"></span></div>
+      <div class="otp-row">
+        <input class="obox" id="o1" maxlength="1" type="tel" oninput="oNav(this,'o2')" onkeydown="oBk(event,this,'')"/>
+        <input class="obox" id="o2" maxlength="1" type="tel" oninput="oNav(this,'o3')" onkeydown="oBk(event,this,'o1')"/>
+        <input class="obox" id="o3" maxlength="1" type="tel" oninput="oNav(this,'o4')" onkeydown="oBk(event,this,'o2')"/>
+        <input class="obox" id="o4" maxlength="1" type="tel" oninput="oNav(this,'')"   onkeydown="oBk(event,this,'o3')"/>
+      </div>
+      <div class="otp-resend">Didn't get it? <button onclick="sendOTP(true)">Resend</button></div>
+      <button class="btn-full" onclick="verifyOTP()">VERIFY & ENTER →</button>
+      <div class="ldivider">or</div>
+      <button class="btn-skip" onclick="document.getElementById('ls1').classList.add('on');document.getElementById('ls2').classList.remove('on')">← Change Number</button>
+    </div>
+  </div>
+</div>
 
-    <h2>👨‍💼 Active Porters</h2>
-    <div id="porterList"></div>
+<div id="s-main" class="screen">
+  <div class="nobargain-bar">🛡️ No Bargaining Guarantee · Fixed Price · Verified Porters · Cash / UPI ⚡</div>
+  <section class="hero" id="home">
+    <div class="h-glow"></div><div class="h-grid"></div>
+    <div class="hl">
+      <div class="chip"><div class="chip-dot"></div>Live · Indore · <span id="active-ct">0</span> Active Porters</div>
+      <h1>Move Bags.<br/><em>Instantly.</em></h1>
+      <p class="hero-sub">Fixed price. Verified porter. Book in 30 seconds — no app, no bargaining, no stress.</p>
+      <div class="trust-row">
+        <div class="tp"><div class="tpd g"></div>Fixed Price</div>
+        <div class="tp"><div class="tpd y"></div>Verified Porters</div>
+        <div class="tp"><div class="tpd b"></div>2–5 Min ETA</div>
+        <div class="tp"><div class="tpd g"></div>Cash / UPI</div>
+      </div>
+      
+      <div class="bcard" id="booking">
+        <div class="bc-hd"><div class="bc-tag">⚡ Smart Booking</div><div class="bc-eta"><div class="etad"></div>Porters nearby</div></div>
+        <div class="fw"><span class="fi">📍</span><input type="text" id="pickup" placeholder="Pickup — type or 📡 GPS" autocomplete="off"/><button class="gps-btn" onclick="getGPS()">📡 GPS</button></div>
+        <div class="fw"><span class="fi">🏁</span><input type="text" id="drop" placeholder="Drop — 📌 click map to pin" readonly onclick="toast('👆 Click the map to set drop →','y')"/></div>
+        <div class="row2">
+          <div class="fw" style="margin-bottom:0"><span class="fi">🧳</span>
+            <select id="bags" onchange="recalc()"><option value="1">1 Bag</option><option value="2">2 Bags</option><option value="3" selected>3 Bags</option><option value="4">4 Bags</option><option value="5">5+ Bags</option></select></div>
+          <div class="fw" style="margin-bottom:0"><span class="fi">🏷️</span>
+            <select id="luggt" onchange="recalc()"><option value="0">Normal Bags</option><option value="20">Heavy (+₹20)</option><option value="0">Fragile (careful)</option></select></div>
+        </div>
+        <div class="coup-row">
+          <input class="coup-in" id="coup-in" placeholder="Coupon code (e.g. FIRST50)" maxlength="12"/>
+          <button class="coup-apply" onclick="applyCoupon()">APPLY</button>
+        </div>
+        <div class="coup-tag" id="coup-tag"><span id="coup-msg"></span><button class="coup-rm" onclick="removeCoupon()">✕</button></div>
+        <div class="eta-strip"><div class="eta-l">Estimated arrival time</div><div class="eta-r" id="eta-disp"><div class="etad"></div>2–5 min</div></div>
+        <div class="pstrip">
+          <div class="psl"><div class="pl">Fixed Price</div><div class="pb" id="p-break">₹50 base + dist + bags</div></div>
+          <div class="psr"><div class="pv" id="p-val">₹80</div><div class="pdist">📏 <span id="dist-disp">— km</span></div></div>
+        </div>
+        <div class="p-avail"><div class="pad"></div><span id="p-avail-txt">Loading porters...</span></div>
+        <button class="btn-book" id="bookBtn" onclick="initiateBooking()">💬 BOOK — SEND TO ACTIVE PORTERS</button>
+        <div class="map-hint">📌 <b>Tip:</b> Click the map to set your exact drop pin</div>
+      </div>
+    </div>
+    <div style="position:relative;z-index:1">
+      <div class="map-panel">
+        <div class="map-top">
+          <div class="mbadge g" id="badge-u">📍 Pickup: not set</div>
+          <div class="mbadge y" id="badge-d">🏁 Drop: not set</div>
+          <div class="mbadge b" id="badge-p">👷 Loading...</div>
+        </div>
+        <div id="map"><div class="map-ph"><div class="mph">🗺️</div><h4>Add Google Maps API Key</h4><p>Open file → find <code>MAPS_KEY</code> → paste key from <a href="https://console.cloud.google.com/" target="_blank">console.cloud.google.com →</a></p></div></div>
+        <div class="map-instr" id="map-instr">👆 Click map to pin drop location</div>
+      </div>
+    </div>
+  </section>
+  <div class="ticker"><div class="t-lbl">Live</div><div class="t-track" id="ticker"></div></div>
+  <section class="sec alt" id="how">
+    <div class="stag">4 Simple Steps</div><div class="stitle">How It Works</div><p class="ssub">Book faster than ordering food. No app needed.</p>
+    <div class="steps">
+      <div class="step rv"><div class="snum">01</div><div class="s-ico">📱</div><h4>Login with Phone</h4><p>Quick OTP login via WhatsApp. Your bookings are saved automatically.</p></div>
+      <div class="step rv"><div class="snum">02</div><div class="s-ico">📍</div><h4>Pin Locations</h4><p>GPS for pickup. Click map for drop. Real distance calculated instantly.</p></div>
+      <div class="step rv"><div class="snum">03</div><div class="s-ico">⚡</div><h4>Active Porters Notified</h4><p>Only online porters get your booking. First to reply YES is locked in.</p></div>
+      <div class="step rv"><div class="snum">04</div><div class="s-ico">✅</div><h4>Done & Rated</h4><p>Pay fixed price after delivery. Rate in one tap.</p></div>
+    </div>
+  </section>
+  <section class="sec" id="pricing">
+    <div class="stag">Zero Confusion</div><div class="stitle">Fixed Pricing</div><p class="ssub">What you see is what you pay. Always.</p>
+    <div class="pgrid">
+      <div class="pc rv"><div class="pc-km">Short · &lt;200m</div><div class="pc-amt"><sup>₹</sup>60–80</div><div class="pc-note">Same platform, within hall.</div><ul class="pc-list"><li>1–2 bags</li><li>Same floor</li><li>Instant</li><li>Cash / UPI</li></ul></div>
+      <div class="pc hot rv"><div class="hot-tag">Most Booked</div><div class="pc-km">Medium · 200–500m</div><div class="pc-amt"><sup>₹</sup>100–150</div><div class="pc-note">Cross-platform to gate.</div><ul class="pc-list"><li>Up to 4 bags</li><li>Cross-platform</li><li>Verified porter</li><li>Cash / UPI</li></ul></div>
+      <div class="pc rv"><div class="pc-km">Long · 500m–1km</div><div class="pc-amt"><sup>₹</sup>170–240</div><div class="pc-note">Station to parking / taxi.</div><ul class="pc-list"><li>5+ bags trolley</li><li>Full station</li><li>Priority</li><li>Cash / UPI</li></ul></div>
+      <div class="pc rv"><div class="pc-km">Airport · Terminal</div><div class="pc-amt"><sup>₹</sup>300+</div><div class="pc-note">Check-in to gate or arrival to exit.</div><ul class="pc-list"><li>Unlimited bags</li><li>ID-verified</li><li>Priority</li><li>Card / UPI</li></ul></div>
+    </div>
+    <div class="formula rv"><div class="fb"><div class="fl">Formula</div><div class="fe">Price = <em>₹50</em> + (<em>km×₹20</em>) + (<em>bags×₹10</em>)</div></div><div class="fdiv"></div><div class="fb"><div class="fl">2km + 3 bags</div><div class="fe"><em>50+40+30 = ₹120</em></div></div><div class="fdiv"></div><div class="fb"><div class="fl">Use FIRST50</div><div class="fe"><em>₹120 − ₹30 = ₹90</em> 🎉</div></div></div>
+  </section>
+  <section class="sec alt" id="porters">
+    <div class="stag">Our Team</div><div class="stitle">Active Porter Roster</div><p class="ssub">Bookings go <strong>only</strong> to active (🟢) porters. Offline ones are never contacted.</p>
+    <div style="margin-top:34px"><div class="rf-btns"><button class="rf-btn active" onclick="filterP('all',this)">All</button><button class="rf-btn" onclick="filterP('active',this)">🟢 Active</button><button class="rf-btn" onclick="filterP('offline',this)">⚫ Offline</button></div><div class="pgrid2" id="porter-grid"></div></div>
+  </section>
+  <section class="sec" id="join">
+    <div class="stag">Join LuggyBoy</div><div class="stitle">Earn by Helping People</div><p class="ssub">Flexible hours. Real money. WhatsApp-based. Start today.</p>
+    <div class="pg">
+      <div>
+        <div class="perks">
+          <div class="perk rv"><div class="pi">💰</div><div><h5>Earn ₹600–1,200/day</h5><p>Top porters earn ₹1,000+ on busy days. Direct payment.</p></div></div>
+          <div class="perk rv"><div class="pi">⏱️</div><div><h5>Work Your Own Hours</h5><p>Go online when you want. No minimum required.</p></div></div>
+          <div class="perk rv"><div class="pi">📱</div><div><h5>WhatsApp System</h5><p>Bookings arrive on WhatsApp. Reply YES to accept.</p></div></div>
+          <div class="perk rv"><div class="pi">🏅</div><div><h5>Badges & Bonuses</h5><p>5-star porters get priority bookings and weekly bonuses.</p></div></div>
+        </div>
+        <div class="pstats-g">
+          <div class="pstat rv"><div class="sn">₹820</div><div class="sl">Avg daily earnings</div></div>
+          <div class="pstat rv"><div class="sn">600+</div><div class="sl">Active porters</div></div>
+          <div class="pstat rv"><div class="sn">4.8★</div><div class="sl">Avg rating</div></div>
+          <div class="pstat rv"><div class="sn">20+</div><div class="sl">Stations</div></div>
+        </div>
+      </div>
+      <div class="pform rv">
+        <h3>Apply to Join 🧳</h3><p class="psub">We'll WhatsApp you within 24 hours.</p>
+        <div class="ff"><label>Full Name *</label><input type="text" id="jn" placeholder="e.g. Ravi Kumar"/></div>
+        <div class="ff"><label>Phone Number *</label><input type="tel" id="jp" placeholder="e.g. 9876543210"/></div>
+        <div class="ff"><label>Station / Area *</label><select id="js"><option value="">Select...</option><option>Indore Junction</option><option>Indore Airport</option><option>BRTS Bus Stand</option><option>Sarwate Bus Stand</option><option>Other</option></select></div>
+        <div class="ff"><label>Bio (optional)</label><textarea id="jb" placeholder="Tell us about yourself..."></textarea></div>
+        <button class="btn-join" onclick="joinPorter()">APPLY NOW — FREE →</button>
+      </div>
+    </div>
+  </section>
+  <section class="sec alt" id="contact">
+    <div class="stag">We're Here</div><div class="stitle">Support & Contact</div><p class="ssub">6 AM–11 PM daily. WhatsApp is fastest.</p>
+    <div class="cgrid">
+      <div class="ccard rv"><div class="cico">📞</div><div><h4>Call Us</h4><p>6AM–11PM daily<br/><a href="tel:+916267293870">+91 62672 93870</a></p></div></div>
+      <div class="ccard rv"><div class="cico">💬</div><div><h4>WhatsApp</h4><p>Under 2 min reply<br/><a href="https://wa.me/916267293870" target="_blank">Chat Now →</a></p></div></div>
+      <div class="ccard rv"><div class="cico">✉️</div><div><h4>Email</h4><p>2-hour response<br/><a href="mailto:hello@luggyboy.in">hello@luggyboy.in</a></p></div></div>
+      <div class="ccard rv"><div class="cico">📍</div><div><h4>Operating Areas</h4><p>Indore Junction · Airport<br/>BRTS & Bus Stands</p></div></div>
+    </div>
+  </section>
+  <footer>
+    <div class="ft">
+      <div class="fb2"><div class="logo" style="text-decoration:none"><div class="logo-box">🧳</div>Luggy<span>Boy</span></div><p>Smart porter booking at stations, airports & bus stands.</p></div>
+      <div class="fc"><h5>Product</h5><a href="#how">How It Works</a><a href="#pricing">Pricing</a><a href="#booking">Book Now</a><a href="#join">Become Porter</a></div>
+      <div class="fc"><h5>Company</h5><a href="#">About</a><a href="#">Blog</a><a href="#">Careers</a><a href="#">Press</a></div>
+      <div class="fc"><h5>Legal</h5><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Refunds</a><a href="#contact">Contact</a></div>
+    </div>
+    <div class="fbot"><div class="copy">© 2026 LuggyBoy. Built with ❤️ in Indore, India.</div><a class="wa-ft" href="https://wa.me/916267293870" target="_blank">💬 WhatsApp Us</a></div>
+  </footer>
+</div>
 
-    <h2>📦 Live Bookings</h2>
-    <div id="bookingList"></div>
+<div id="s-bookings" class="screen" style="padding:80px 5% 40px;">
+  <button class="btn-back" onclick="goS('main')">← Back to Home</button>
+  <h2 style="color:var(--y); text-transform:uppercase; font-weight:800; font-size:1.5rem; margin-bottom:20px;">My Bookings</h2>
+  
+  <div id="history-list" class="bk-list">
+    <p style="color:#888; text-align:center; padding:20px;">Loading your history...</p>
+  </div>
+</div>
 
-    <script>
-        async function loadData() {
-            // Load Stats & Bookings
-            const res = await fetch('/api/admin/dashboard');
-            const data = await res.json();
-            document.getElementById('totalB').innerText = "Total: " + data.stats.total;
-            document.getElementById('revB').innerText = "Revenue: ₹" + data.stats.revenue;
+<div class="ov" id="bookModal"><div class="modal">
+  <div class="m-ico">🚀</div><h3>Dispatched!</h3>
+  <div class="m-bid" id="m-bid">LB-00000</div>
+  <div class="dispatch-box"><div class="db-lbl">📡 Sent to Active Porters</div><div id="dispatch-list"></div></div>
+  <div class="m-dtl" id="m-dtl"></div>
+  <p>WhatsApp opened for each active porter.<br/>First to reply <strong style="color:var(--green)">YES [BOOKING_ID]</strong> gets assigned.</p>
+  <button class="btn-book" style="margin-bottom:8px" onclick="closeModal('bookModal');openAssignModal()">🧑‍💼 Assign Porter (After Reply)</button>
+  <button class="m-close" onclick="closeModal('bookModal')">Close</button>
+</div></div>
 
-            const bList = document.getElementById('bookingList');
-            bList.innerHTML = '';
-            data.activeBookings.forEach(b => {
-                bList.innerHTML += `<div class="card">
-                    <b>ID: ${b.bookingId}</b> | Status: ${b.status}<br>
-                    From: ${b.pickup} To: ${b.drop} | Fare: ₹${b.fare}<br>
-                    <button onclick="acceptTrip('${b.bookingId}')">Assign to Ravi</button>
-                </div>`;
-            });
+<div class="ov" id="assignModal"><div class="modal">
+  <div class="m-ico">🧑‍💼</div><h3>Assign Porter</h3>
+  <p>Select the porter who replied YES:</p>
+  <div class="accept-list" id="accept-list"></div>
+  <button class="m-close" onclick="closeModal('assignModal')">Cancel</button>
+</div></div>
 
-            // Load Porters
-            const pRes = await fetch('/api/porters/active');
-            const pData = await pRes.json();
-            const pList = document.getElementById('porterList');
-            pList.innerHTML = '';
-            pData.porters.forEach(p => {
-                pList.innerHTML += `<div class="porter-card">
-                    ${p.emoji} <b>${p.name}</b><br>📍 ${p.area}
-                </div>`;
-            });
-        }
+<div class="ov" id="assignedModal"><div class="modal">
+  <div class="m-ico">✅</div><h3>Porter Assigned!</h3>
+  <div class="m-dtl" id="assigned-dtl"></div>
+  <a class="m-call" id="call-btn" href="#">📞 Call Porter Now</a>
+  <a class="m-wa" id="assigned-wa" href="#" target="_blank">💬 WhatsApp Porter</a>
+  <button class="btn-book" style="margin-bottom:8px" onclick="closeModal('assignedModal');openFeedback()">⭐ Rate This Booking</button>
+  <button class="m-close" onclick="closeModal('assignedModal')">Done</button>
+</div></div>
 
-        async function acceptTrip(id) {
-            await fetch('/api/booking/accept', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ bookingId: id, porterId: 'P01' })
-            });
-            loadData();
-        }
+<div class="ov" id="feedbackModal"><div class="modal">
+  <div class="m-ico">⭐</div><h3>Rate Porter</h3>
+  <p id="fb-ptxt">How was your experience?</p>
+  <div class="star-row" id="star-row"><button class="sb" onclick="setStar(1)">★</button><button class="sb" onclick="setStar(2)">★</button><button class="sb" onclick="setStar(3)">★</button><button class="sb" onclick="setStar(4)">★</button><button class="sb" onclick="setStar(5)">★</button></div>
+  <textarea class="fb-ta" id="fb-ta" placeholder="Optional comment..."></textarea>
+  <button class="btn-full" onclick="submitFeedback()">SUBMIT →</button>
+  <button class="m-close" style="display:block;margin:8px auto 0" onclick="closeModal('feedbackModal')">Skip</button>
+</div></div>
 
-        loadData();
-    </script>
+<div class="ov" id="porterModal"><div class="modal">
+  <div class="m-ico">🎉</div><h3>Application Sent!</h3>
+  <p id="p-msg">We'll WhatsApp you within 24 hours.</p>
+  <a class="m-wa" id="p-wa" href="#" target="_blank">💬 Chat with Team</a>
+  <button class="m-close" onclick="closeModal('porterModal')">Close</button>
+</div></div>
+
+<div class="ov" id="referModal"><div class="modal">
+  <div class="m-ico">🎁</div><h3>Refer & Earn!</h3>
+  <p>Share your code. Both of you get <strong style="color:var(--y)">₹20 off</strong>.</p>
+  <div class="m-bid" id="ref-cd-disp">REF-XXXX</div>
+  <div class="m-dtl"><div class="mrow"><span class="mk">Your earnings</span><span class="mv g">₹20 per referral</span></div><div class="mrow"><span class="mk">Friend's discount</span><span class="mv g">₹20 first booking</span></div></div>
+  <button class="m-wa" onclick="shareRef()">💬 Share on WhatsApp</button>
+  <button class="m-close" onclick="closeModal('referModal')">Close</button>
+</div></div>
+
+<div class="toast" id="toast-el"></div>
+
+<script>
+(function(){
+  const k=window.CFG.MAPS_KEY;
+  if(k&&k!=='YOUR_GOOGLE_MAPS_API_KEY'){
+    const s=document.createElement('script');
+    s.src=`https://maps.googleapis.com/maps/api/js?key=${k}&libraries=places,geometry&callback=initMap`;
+    s.async=true;s.defer=true;s.onerror=()=>toast('⚠️ Maps failed. Check API key.','r');
+    document.head.appendChild(s);
+  }
+})();
+</script>
+
+<script>
+/* ══════════ STATE ══════════ */
+const API = "/api";
+let gMap,pickMark,dropMark,routeLine,pMarkers=[];
+let uLat=null,uLng=null,dLat=null,dLng=null,realDist=null;
+let mapsOn=false,coup=0,couponCode='',isBooking=false;
+let selStar=0,lastBID=null,lastBooking=null,lastPorter=null;
+let porterData=[]; // from API
+
+/* ══════════ CURSOR ══════════ */
+const CE=document.getElementById('cur'),CR=document.getElementById('cur-r');
+document.addEventListener('mousemove',e=>{
+  CE.style.left=e.clientX+'px';CE.style.top=e.clientY+'px';
+  setTimeout(()=>{CR.style.left=e.clientX+'px';CR.style.top=e.clientY+'px';},70);
+});
+
+/* ══════════ NETWORK ══════════ */
+(function(){
+  const nb=document.getElementById('net-badge'),ob=document.getElementById('offline-bar');
+  function upd(){if(navigator.onLine){nb.className='net-on';nb.innerHTML='<div class="net-dot" style="background:var(--green)"></div>Online';ob.classList.remove('show');}else{nb.className='net-off';nb.textContent='📵 Offline';ob.classList.add('show');}}
+  window.addEventListener('online',upd);window.addEventListener('offline',upd);upd();
+})();
+
+/* ══════════ API HELPERS ══════════ */
+async function api(path,opts={}){
+  try{
+    const r=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts});
+    return await r.json();
+  }catch(e){
+    console.error('API error:',path,e.message);
+    return{ok:false,msg:'Cannot reach server. Check your connection or run the backend.'};
+  }
+}
+
+/* ══════════ INIT ══════════ */
+window.addEventListener('DOMContentLoaded',async()=>{
+  setupCursor_init();
+  checkNetwork();
+  initRV();
+  buildTicker();
+  await checkBackend();
+  initAuth();
+  await loadPorters();
+  updateSBCount();
+});
+
+async function checkBackend(){
+  const dot=document.getElementById('api-dot'),txt=document.getElementById('api-txt');
+  const r=await api('/health');
+  if(r.ok){dot.className='api-dot ok';txt.textContent='✅ Backend connected — '+r.activePorters+' porters active';}
+  else{dot.className='api-dot err';txt.textContent='⚠️ Backend offline. Run: npm start in project folder';}
+}
+
+async function loadPorters(){
+  const r=await api('/porters');
+  if(r.ok){
+    porterData=r.porters;
+    const n=porterData.filter(p=>p.active).length;
+    document.getElementById('active-ct').textContent=n;
+    document.getElementById('p-avail-txt').textContent=`${n} verified porter${n!==1?'s':''} ready near you`;
+    document.getElementById('badge-p').textContent=`👷 ${n} active`;
+    renderPorters();
+  }
+}
+
+/* ══════════ AUTH ══════════ */
+function getUser(){return JSON.parse(localStorage.getItem('lb_user')||'null')}
+function saveUser(u){localStorage.setItem('lb_user',JSON.stringify(u))}
+function getRefCode(phone){return'LB'+((parseInt(phone.slice(-4))*7+13)%9999).toString().padStart(4,'0')}
+
+function initAuth(){
+  const u=getUser();
+  const el=document.getElementById('nav-auth');
+  if(u){
+    goS('main');
+    el.innerHTML=`<button class="btn-nav" onclick="openSB()">👤 +91${u.phone.slice(-4)}</button>`;
+    updateSB(u);
+  }else{
+    goS('login');
+    el.innerHTML=`<button class="btn-nav" onclick="goS('login')">Login</button>`;
+    updateSB(null);
+  }
+}
+
+function updateSB(u){
+  const el=document.getElementById('sb-prof');
+  const code=u?getRefCode(u.phone):'---';
+  if(u){
+    el.innerHTML=`<div class="sb-prof"><div class="sb-av">👤</div><div class="sb-name">+91 ${u.phone}</div><div class="sb-ph">${u.phone}</div><div class="sb-ref-box"><div><div class="srl">Referral Code</div><div class="src">${code}</div></div><button class="src-copy" onclick="copyText('${code}')">Copy</button></div></div>`;
+    document.getElementById('sb-logout').style.display='block';
+  }else{
+    el.innerHTML=`<div class="sb-prof" onclick="closeSB();goS('login')"><div class="sb-av">👤</div><div class="sb-name" style="color:#888">Not logged in</div><div class="sb-ph" style="color:#555">Tap to login →</div></div>`;
+    document.getElementById('sb-logout').style.display='none';
+  }
+}
+
+let devOTP='';
+async function sendOTP(resend=false){
+  const phone=document.getElementById('ph-in').value.trim();
+  if(phone.length!==10){toast('⚠️ Enter valid 10-digit number','y');return;}
+  const btn=document.querySelector('#ls1 .btn-full');
+  btn.disabled=true;btn.textContent='Sending...';
+  const r=await api('/auth/login',{method:'POST',body:JSON.stringify({phone})});
+  btn.disabled=false;btn.textContent='GET OTP →';
+  if(!r.ok){toast('❌ '+r.msg,'r');return;}
+  devOTP=r.dev_otp||'';
+  document.getElementById('otp-ph').textContent=phone;
+  document.getElementById('ls1').classList.remove('on');
+  document.getElementById('ls2').classList.add('on');
+  if(r.waLink)window.open(r.waLink,'_blank');
+  toast(resend?'📲 OTP resent!':'📲 OTP sent via WhatsApp!','g');
+  if(devOTP)console.log(`🔐 Dev OTP for ${phone}: ${devOTP}`);
+}
+
+function oNav(el,nxt){el.value=el.value.replace(/\D/,'');if(el.value&&nxt)document.getElementById(nxt).focus();if(!nxt)verifyOTP();}
+function oBk(e,el,prv){if(e.key==='Backspace'&&!el.value&&prv)document.getElementById(prv).focus();}
+
+async function verifyOTP(){
+  const otp=['o1','o2','o3','o4'].map(id=>document.getElementById(id).value).join('');
+  if(otp.length!==4){toast('⚠️ Enter 4-digit OTP','y');return;}
+  const phone=document.getElementById('ph-in').value.trim();
+  const btn=document.querySelector('#ls2 .btn-full');
+  btn.disabled=true;btn.textContent='Verifying...';
+  const r=await api('/auth/verify',{method:'POST',body:JSON.stringify({phone,otp})});
+  btn.disabled=false;btn.textContent='VERIFY & ENTER →';
+  if(!r.ok){toast('❌ '+r.msg,'r');return;}
+  saveUser(r.user||{phone});
+  initAuth();goS('main');
+  toast('✅ Logged in!','g');
+}
+
+function skipLogin(){goS('main');toast('👀 Exploring as guest — login to save bookings','y');}
+
+function logout(){
+  localStorage.removeItem('lb_user');
+  closeSB();initAuth();goS('login');
+  toast('👋 Logged out','g');
+}
+
+/* ══════════ SIDEBAR ══════════ */
+function openSB(){document.getElementById('sb').classList.add('on');document.getElementById('sbov').classList.add('on')}
+function closeSB(){document.getElementById('sb').classList.remove('on');document.getElementById('sbov').classList.remove('on')}
+function updateSBCount(){
+  const bks=JSON.parse(localStorage.getItem('lb_bookings')||'[]');
+  document.getElementById('sb-cnt').textContent=bks.length;
+}
+
+/* ══════════ HAVERSINE ══════════ */
+function hav(la1,lo1,la2,lo2){const R=6371,dL=(la2-la1)*Math.PI/180,dG=(lo2-lo1)*Math.PI/180;const a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dG/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+
+/* ══════════ PRICE CALC ══════════ */
+function recalc(){
+  const bags=parseInt(document.getElementById('bags').value)||1;
+  const heavy=parseInt(document.getElementById('luggt').value)||0;
+  const base=50,kpm=20;
+  const dc=realDist!==null?Math.round(realDist*kpm):0;
+  const bc=bags*10;
+  const gross=base+dc+bc+heavy;
+  const total=Math.max(30,gross-coup);
+  let pvHTML=coup>0?`<span class="orig">₹${gross}</span>₹${total}`:`₹${total}`;
+  document.getElementById('p-val').innerHTML=pvHTML;
+  document.getElementById('dist-disp').textContent=realDist!==null?realDist.toFixed(2)+' km':'— km';
+  document.getElementById('p-break').textContent=`₹${base}+₹${dc}+₹${bc}`+(heavy?`+₹${heavy}`:'')+( coup?` −₹${coup}`:'');
+  if(realDist!==null){const eta=Math.max(2,Math.ceil(realDist*3));document.getElementById('eta-disp').innerHTML=`<div class="etad"></div>${eta}–${eta+3} min`;}
+  return{total,gross,base,dc,bc,heavy,bags};
+}
+recalc();
+
+function updateDist(){if(uLat!==null&&dLat!==null){realDist=hav(uLat,uLng,dLat,dLng);recalc();if(mapsOn)drawRoute();}}
+
+/* ══════════ COUPON ══════════ */
+async function applyCoupon(){
+  const code=document.getElementById('coup-in').value.trim().toUpperCase();
+  if(!code){toast('⚠️ Enter a coupon code','y');return;}
+  const u=getUser();
+  if(!u){toast('⚠️ Login first to use a coupon','y');return;}
+  const r=await api('/coupon/validate',{method:'POST',body:JSON.stringify({code,phone:u.phone})});
+  if(!r.ok){toast('❌ '+r.msg,'r');return;}
+  coup=r.off;couponCode=code;
+  document.getElementById('coup-tag').classList.add('show');
+  document.getElementById('coup-msg').textContent=`✅ ${code} — ${r.label}`;
+  recalc();toast(`🎉 ${r.label}`,'g');
+}
+function removeCoupon(){coup=0;couponCode='';document.getElementById('coup-tag').classList.remove('show');document.getElementById('coup-in').value='';recalc();toast('Coupon removed','y');}
+
+/* ══════════ GPS ══════════ */
+function getGPS(){
+  if(!navigator.geolocation){toast('❌ Geolocation not supported','r');return;}
+  if(!navigator.onLine){toast('📵 No internet','r');return;}
+  toast('📡 Detecting location...','y');
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      uLat=pos.coords.latitude;uLng=pos.coords.longitude;
+      revGeo(uLat,uLng,addr=>{
+        document.getElementById('pickup').value=addr;
+        document.getElementById('badge-u').textContent='📍 '+addr.split(',')[0];
+      });
+      if(mapsOn&&gMap){
+        gMap.setCenter({lat:uLat,lng:uLng});gMap.setZoom(15);
+        if(pickMark)pickMark.setMap(null);
+        pickMark=mkM(uLat,uLng,'#22C55E','#fff');
+        showPMarkers();
+      }
+      updateDist();toast('✅ Pickup set!','g');
+    },
+    err=>{const m={1:'❌ Location denied.',2:'❌ Location unavailable.',3:'❌ Timed out.'};toast(m[err.code]||'❌ Location error','r');}
+    ,{timeout:10000,maximumAge:60000}
+  );
+}
+
+/* ══════════ REVERSE GEOCODE ══════════ */
+function revGeo(lat,lng,cb){
+  if(!mapsOn||!window.google){cb(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);return;}
+  new google.maps.Geocoder().geocode({location:{lat,lng}},(r,s)=>{cb(s==='OK'&&r[0]?r[0].formatted_address:`${lat.toFixed(4)}, ${lng.toFixed(4)}`);});
+}
+
+/* ══════════ PICKUP GEOCODE ══════════ */
+document.getElementById('pickup').addEventListener('keydown',e=>{
+  if(e.key!=='Enter'||!mapsOn||!window.google)return;
+  const v=e.target.value.trim();if(!v)return;
+  new google.maps.Geocoder().geocode({address:v+', Indore, India'},(r,s)=>{
+    if(s==='OK'&&r[0]){uLat=r[0].geometry.location.lat();uLng=r[0].geometry.location.lng();document.getElementById('badge-u').textContent='📍 '+v.split(',')[0];if(pickMark)pickMark.setMap(null);pickMark=mkM(uLat,uLng,'#22C55E','#fff');gMap.setCenter({lat:uLat,lng:uLng});showPMarkers();updateDist();}
+    else toast('⚠️ Location not found.','y');
+  });
+});
+
+/* ══════════ MAP MARKER HELPER ══════════ */
+function mkM(lat,lng,fill,stroke){
+  return new google.maps.Marker({position:{lat,lng},map:gMap,animation:google.maps.Animation.DROP,icon:{path:google.maps.SymbolPath.CIRCLE,scale:11,fillColor:fill,fillOpacity:1,strokeColor:stroke,strokeWeight:2}});
+}
+
+/* ══════════ ROUTE LINE ══════════ */
+function drawRoute(){
+  if(!mapsOn||uLat===null||dLat===null)return;
+  if(routeLine)routeLine.setMap(null);
+  routeLine=new google.maps.Polyline({path:[{lat:uLat,lng:uLng},{lat:dLat,lng:dLng}],geodesic:true,strokeColor:'#FFD600',strokeOpacity:.65,strokeWeight:3,map:gMap});
+  const b=new google.maps.LatLngBounds();b.extend({lat:uLat,lng:uLng});b.extend({lat:dLat,lng:dLng});gMap.fitBounds(b,60);
+}
+
+/* ══════════ PORTER MARKERS ══════════ */
+function showPMarkers(){
+  pMarkers.forEach(m=>m.setMap(null));pMarkers=[];
+  if(!mapsOn||uLat===null)return;
+  const act=porterData.filter(p=>p.active);
+  act.forEach((p,i)=>{
+    const angle=(i/act.length)*2*Math.PI,r=0.003+Math.random()*0.004;
+    const m=new google.maps.Marker({position:{lat:uLat+r*Math.sin(angle),lng:uLng+r*Math.cos(angle)},map:gMap,title:p.name,icon:{path:google.maps.SymbolPath.CIRCLE,scale:9,fillColor:'#FFD600',fillOpacity:.9,strokeColor:'#000',strokeWeight:1.5}});
+    const iw=new google.maps.InfoWindow({content:`<div style="background:#111;color:#fff;padding:7px;border-radius:7px;font-family:Outfit,sans-serif;font-size:11px"><b style="color:#FFD600">${p.name}</b><br>⭐ ${p.rating} · ${p.area}<br><span style="color:#22C55E">● Active</span></div>`});
+    m.addListener('click',()=>iw.open(gMap,m));
+    pMarkers.push(m);
+  });
+}
+
+/* ══════════ GOOGLE MAPS INIT ══════════ */
+window.initMap=function(){
+  mapsOn=true;document.getElementById('map').innerHTML='';
+  gMap=new google.maps.Map(document.getElementById('map'),{
+    zoom:14,center:{lat:22.7196,lng:75.8577},disableDefaultUI:true,zoomControl:true,clickableIcons:false,
+    styles:[{elementType:'geometry',stylers:[{color:'#111'}]},{elementType:'labels.text.fill',stylers:[{color:'#666'}]},{elementType:'labels.text.stroke',stylers:[{color:'#0d0d0d'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#1e1e1e'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#272727'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#070707'}]},{featureType:'poi',stylers:[{visibility:'off'}]}]
+  });
+  gMap.addListener('click',event=>{
+    dLat=event.latLng.lat();dLng=event.latLng.lng();
+    if(dropMark)dropMark.setMap(null);
+    dropMark=mkM(dLat,dLng,'#FFD600','#000');
+    revGeo(dLat,dLng,addr=>{document.getElementById('drop').value=addr;document.getElementById('badge-d').textContent='🏁 '+addr.split(',')[0];});
+    document.getElementById('map-instr').style.display='none';
+    updateDist();toast('📌 Drop pinned!','g');
+  });
+  try{
+    const ac=new google.maps.places.Autocomplete(document.getElementById('pickup'),{componentRestrictions:{country:'IN'}});
+    ac.addListener('place_changed',()=>{const pl=ac.getPlace();if(!pl.geometry)return;uLat=pl.geometry.location.lat();uLng=pl.geometry.location.lng();document.getElementById('badge-u').textContent='📍 '+pl.name;if(pickMark)pickMark.setMap(null);pickMark=mkM(uLat,uLng,'#22C55E','#fff');gMap.setCenter({lat:uLat,lng:uLng});showPMarkers();updateDist();});
+  }catch(e){}
+};
+
+/* ══════════ INITIATE BOOKING ══════════ */
+async function initiateBooking(){
+  if(!navigator.onLine){toast('📵 No internet','r');return;}
+  if(isBooking){toast('⏳ Booking in progress...','y');return;}
+  const u=getUser();
+  if(!u){toast('⚠️ Please login to book','y');setTimeout(()=>goS('login'),1200);return;}
+  const pickup=document.getElementById('pickup').value.trim();
+  const drop=document.getElementById('drop').value.trim();
+  if(!pickup){toast('⚠️ Enter your pickup location','y');return;}
+  if(!dLat){toast('⚠️ Click the map to set drop location','y');return;}
+  if(!drop){toast('⚠️ Drop location not set','y');return;}
+
+  isBooking=true;
+  document.getElementById('bookBtn').disabled=true;
+  document.getElementById('loader-sub').textContent='Creating booking...';
+  document.getElementById('loader').classList.add('on');
+
+  const payload={
+    userPhone:u.phone,pickup,drop,
+    pickupLat:uLat,pickupLng:uLng,
+    dropLat:dLat,dropLng:dLng,
+    bags:document.getElementById('bags').value,
+    luggageType:document.getElementById('luggt').value==='20'?'heavy':'normal',
+    distanceKm:realDist||0,
+    couponCode:couponCode||null,
+    referralCode:sessionStorage.getItem('referral')||null,
+  };
+
+  const r=await api('/booking',{method:'POST',body:JSON.stringify(payload)});
+  document.getElementById('loader').classList.remove('on');
+  document.getElementById('bookBtn').disabled=false;
+  isBooking=false;
+
+  if(!r.ok){toast('❌ '+r.msg,'r');return;}
+
+  lastBID=r.booking.bookingId;
+  lastBooking=r.booking;
+  lastPorter=null;
+
+  const bks=JSON.parse(localStorage.getItem('lb_bookings')||'[]');
+  bks.unshift(r.booking);localStorage.setItem('lb_bookings',JSON.stringify(bks));
+  updateSBCount();
+
+  r.waLinks.forEach((w,i)=>setTimeout(()=>window.open(w.waLink,'_blank'),i*650));
+
+  document.getElementById('m-bid').textContent=lastBID;
+  document.getElementById('dispatch-list').innerHTML=r.waLinks.map(w=>`<div class="db-row">✅ <strong>${w.porterName}</strong></div>`).join('');
+  const b=r.booking;
+  document.getElementById('m-dtl').innerHTML=`
+    <div class="mrow"><span class="mk">📍 Pickup</span><span class="mv">${cut(pickup,26)}</span></div>
+    <div class="mrow"><span class="mk">🏁 Drop</span><span class="mv">${cut(drop,26)}</span></div>
+    <div class="mrow"><span class="mk">📏 Distance</span><span class="mv">${b.distanceKm.toFixed(2)} km</span></div>
+    <div class="mrow"><span class="mk">⏱️ ETA</span><span class="mv g">${b.eta}–${b.eta+3} min</span></div>
+    ${b.discount?`<div class="mrow"><span class="mk">🎟️ Coupon</span><span class="mv g">−₹${b.discount}</span></div>`:''}
+    <div class="mrow"><span class="mk">💰 Total</span><span class="mv y">₹${b.total}</span></div>
+  `;
+  openModal('bookModal');
+  toast(`📤 Sent to ${r.activeCount} porter${r.activeCount!==1?'s':''}!`,'g');
+}
+
+/* ══════════ ASSIGN PORTAL ══════════ */
+function openAssignModal(){
+  if(!lastBooking){toast('⚠️ No active booking','r');return;}
+  const act=porterData.filter(p=>p.active);
+  document.getElementById('accept-list').innerHTML=act.map(p=>`
+    <div class="ai"><div class="ai-l"><div class="ai-av">${p.emoji||'👤'}</div><div><div class="ai-nm">${p.name}</div><div class="ai-sub">⭐ ${p.rating} · ${p.area}</div></div></div>
+    <button class="btn-assign" onclick="assignPorter('${p.id}')">ASSIGN</button></div>`).join('');
+  openModal('assignModal');
+}
+
+async function assignPorter(pid){
+  const r=await api('/booking/accept',{method:'POST',body:JSON.stringify({bookingId:lastBID,porterId:pid})});
+  if(!r.ok){toast('❌ '+r.msg,'r');return;}
+  lastPorter=r.porter;
+  closeModal('assignModal');
+  const b=r.booking,p=r.porter;
+  document.getElementById('assigned-dtl').innerHTML = `
+    <div style="background:rgba(34,197,94,.08); border:1.5px dashed var(--green); border-radius:8px; padding:15px; text-align:center; margin-bottom:15px;">
+       <div style="font-size:0.65rem; color:var(--green); text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:5px;">Share this OTP with Porter to start</div>
+       <div style="font-size:2.2rem; font-family:'Syne', sans-serif; font-weight:800; color:var(--wh); letter-spacing:6px;">${b.startOtp}</div>
+    </div>
+    <div class="mrow"><span class="mk">👤 Porter</span><span class="mv y">${p.name}</span></div>
+    <div class="mrow"><span class="mk">⭐ Rating</span><span class="mv">${p.rating} · ${p.trips} trips</span></div>
+  `;
+  checkStatusLoop(b.bookingId);
+  document.getElementById('call-btn').href=`tel:+${p.phone}`;
+  document.getElementById('assigned-wa').href=r.userWaLink;
+  window.open(r.userWaLink,'_blank');
+  openModal('assignedModal');
+  toast(`✅ ${p.name} assigned!`,'g');
+}
+
+/* ══════════ FEEDBACK ══════════ */
+function openFeedback(){
+  closeModal('assignedModal');selStar=0;
+  document.querySelectorAll('.sb').forEach(b=>{b.classList.remove('lit');b.style.transform='scale(1)'});
+  document.getElementById('fb-ta').value='';
+  document.getElementById('fb-ptxt').textContent=lastPorter?`How was ${lastPorter.name}?`:'How was your experience?';
+  openModal('feedbackModal');
+}
+function setStar(n){selStar=n;document.querySelectorAll('.sb').forEach((b,i)=>{b.classList.toggle('lit',i<n);b.style.transform=i<n?'scale(1.12)':'scale(1)';});}
+async function submitFeedback(){
+  if(!selStar){toast('⭐ Select a rating first','y');return;}
+  const u=getUser();
+  const r=await api('/feedback',{method:'POST',body:JSON.stringify({bookingId:lastBID,userPhone:u?.phone||'guest',porterId:lastPorter?.id||null,stars:selStar,comment:document.getElementById('fb-ta').value.trim()})});
+  closeModal('feedbackModal');
+  if(r.ok)toast(`🌟 Thanks! ${selStar} star${selStar>1?'s':''} submitted.`,'g');
+  else toast('Feedback saved locally','y');
+}
+
+/* ══════════ PORTER JOIN ══════════ */
+async function joinPorter(){
+  const n=document.getElementById('jn').value.trim();
+  const p=document.getElementById('jp').value.trim();
+  const a=document.getElementById('js').value;
+  const b=document.getElementById('jb').value.trim();
+  if(!n){toast('⚠️ Enter your name','y');return;}
+  if(!p||p.length!==10){toast('⚠️ Valid 10-digit number required','y');return;}
+  if(!a){toast('⚠️ Select your station','y');return;}
+  const r=await api('/porters/join',{method:'POST',body:JSON.stringify({name:n,phone:p,area:a,bio:b})});
+  document.getElementById('p-msg').textContent=r.ok?`Hi ${n}! We'll WhatsApp you at ${p} within 24 hours.`:(r.msg||'Application received!');
+  if(r.adminWaLink)document.getElementById('p-wa').href=r.adminWaLink;
+  openModal('porterModal');
+  ['jn','jp','jb'].forEach(id=>document.getElementById(id).value='');document.getElementById('js').value='';
+}
+
+/* ══════════ REFERRAL ══════════ */
+function openReferModal(){
+  const u=getUser();const code=u?getRefCode(u.phone):'LOGIN-FIRST';
+  document.getElementById('ref-cd-disp').textContent=code;
+  openModal('referModal');
+}
+function shareRef(){
+  const u=getUser();const code=u?getRefCode(u.phone):'---';
+  const msg=encodeURIComponent(`🧳 *Book a porter with LuggyBoy!*\n\nUse my code *${code}* → get ₹20 off!\n\nBook: https://luggyboy.in\n\n_Fixed price. 2 min ETA. No bargaining._`);
+  window.open(`https://wa.me/?text=${msg}`,'_blank');
+}
+
+/* ══════════ MY BOOKINGS ══════════ */
+async function loadMyBookings() {
+  const phone = document.getElementById('ph-in').value.trim();
+  const listDiv = document.getElementById('history-list');
+
+  // Agar phone number input box mein nahi hai (ya user guest hai)
+  if(!phone) { 
+    // Local storage check karo shayad wahan ho
+    const u = getUser();
+    if(!u || !u.phone) {
+        listDiv.innerHTML = '<div style="text-align:center; padding:40px 20px; color:#888; border:1px dashed #444; border-radius:12px;">Please login to view history.<br><br><span style="font-size:2rem;">🧳</span></div>';
+        return; 
+    }
+  }
+  
+  const finalPhone = phone || getUser().phone;
+  listDiv.innerHTML = '<p style="color:#888; text-align:center; padding:20px;">Loading your history...</p>';
+
+  const r = await api('/bookings/history', { method:'POST', body:JSON.stringify({phone: finalPhone}) });
+
+  if(r.ok && r.bookings.length > 0) {
+    listDiv.innerHTML = r.bookings.map(b => `
+      <div style="background:var(--bk2); border:1px solid #333; padding:15px; border-radius:12px; margin-bottom:15px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
+          <span style="color:var(--y); font-weight:800; font-size:1.1rem;">${b.bookingId}</span>
+          <span style="font-size:0.7rem; background:#222; padding:4px 8px; border-radius:4px; text-transform:uppercase; border:1px solid #444;">${b.status.replace('_', ' ')}</span>
+        </div>
+        <div style="font-size:0.85rem; color:#aaa; margin-bottom:5px;">📍 ${b.pickup}</div>
+        <div style="font-size:0.85rem; color:#aaa; margin-bottom:10px;">🏁 ${b.drop}</div>
+        
+        ${b.bill ? `
+          <div style="border-top:1.5px dashed #444; margin-top:10px; padding-top:10px; display:flex; justify-content:space-between; font-weight:800;">
+            <span style="color:#888;">Total Paid</span>
+            <span style="color:var(--green);">₹${b.bill.totalAmount}</span>
+          </div>
+        ` : ''}
+      </div>
+    `).join('');
+  } else {
+    listDiv.innerHTML = '<div style="text-align:center; padding:40px 20px; color:#888; border:1px dashed #444; border-radius:12px;">No bookings found yet.<br><br><span style="font-size:2rem;">🧳</span></div>';
+  }
+}
+
+/* ══════════ PORTER ROSTER ══════════ */
+function renderPorters(filter='all'){
+  const grid=document.getElementById('porter-grid');
+  const list=porterData.filter(p=>filter==='all'?true:filter==='active'?p.active:!p.active);
+  if(!list.length){grid.innerHTML=`<div style="color:#444;font-size:.82rem;padding:20px">No porters found.</div>`;return;}
+  grid.innerHTML=list.map(p=>`<div class="pcard rv ${p.active?'':'off'}">
+    <div class="p-st ${p.active?'on':'off'}">${p.active?'● Active':'○ Offline'}</div>
+    <div class="pav">${p.emoji||'👤'}</div>
+    <div class="pname">${p.name}</div><div class="parea">📍 ${p.area}</div>
+    <div class="pstars">${'★'.repeat(Math.floor(p.rating))}</div>
+    <div class="ptrips">${p.rating} · ${p.trips} trips</div></div>`).join('');
+  grid.querySelectorAll('.rv').forEach(el=>rvObs.observe(el));
+}
+function filterP(f,btn){document.querySelectorAll('.rf-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderPorters(f);}
+
+/* ══════════ TICKER ══════════ */
+function buildTicker(){
+  const data=[{n:'Arjun S.',r:'Platform 1→Exit A',p:'₹80',t:'2m ago'},{n:'Priya M.',r:'Arrival→Parking',p:'₹150',t:'5m ago'},{n:'Ravi K.',r:'Gate 3→Gate 7',p:'₹120',t:'8m ago'},{n:'Sunita R.',r:'Check-in→Depart',p:'₹220',t:'11m ago'},{n:'Mahesh D.',r:'Platform 5→Auto',p:'₹100',t:'14m ago'},{n:'Kavya T.',r:'Bus Stand→Park',p:'₹90',t:'17m ago'}];
+  const tk=document.getElementById('ticker');
+  tk.innerHTML=[...data,...data].map(b=>`<div class="t-item">🧳 <strong>${b.n}</strong> booked · ${b.r} · <strong>${b.p}</strong> · ${b.t}</div>`).join('');
+}
+
+/* ══════════ SCREEN MANAGER ══════════ */
+function goS(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-'+name).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(name==='bookings') loadMyBookings();
+}
+
+/* ══════════ MODAL HELPERS ══════════ */
+function openModal(id){document.getElementById(id).classList.add('on')}
+function closeModal(id){document.getElementById(id).classList.remove('on')}
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('on');}));
+
+/* ══════════ SCROLL REVEAL ══════════ */
+let rvObs;
+function initRV(){
+  rvObs=new IntersectionObserver(entries=>{entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('vis'),i*55);rvObs.unobserve(e.target);}});},{threshold:.1});
+  document.querySelectorAll('.rv').forEach(el=>rvObs.observe(el));
+}
+
+function checkNetwork(){}
+function setupCursor_init(){}
+
+/* ══════════ TOAST ══════════ */
+let tT;
+function toast(msg,type='g'){const t=document.getElementById('toast-el');t.textContent=msg;t.className=`toast show ${type}`;clearTimeout(tT);tT=setTimeout(()=>t.className='toast',3500);}
+
+/* ══════════ UTILS ══════════ */
+function cut(s,n){return s&&s.length>n?s.substr(0,n)+'…':s||''}
+function timeAgo(ts){const d=Date.now()-ts,m=Math.floor(d/60000),h=Math.floor(m/60),dy=Math.floor(h/24);if(m<1)return'just now';if(m<60)return m+'m ago';if(h<24)return h+'h ago';return dy+'d ago';}
+function copyText(t){navigator.clipboard.writeText(t).then(()=>toast('📋 Copied!','g')).catch(()=>toast(t,'y'));}
+
+/* ══════════ RAPIDO START OTP SYSTEM ══════════ */
+async function enterStartOtp() {
+  const bid = prompt("Enter Booking ID (e.g., LB12345):");
+  if(!bid) return;
+  const otp = prompt("Enter 4-digit OTP from customer:");
+  if(!otp) return;
+  
+  const r = await api('/booking/start', {method:'POST', body:JSON.stringify({bookingId: bid.toUpperCase(), otp})});
+  if(r.ok) { toast(r.msg, 'g'); } else { toast(r.msg, 'r'); }
+}
+
+/* ══════════ LIVE TRIP ANIMATION & TRACKING ══════════ */
+let liveTrackingInterval;
+let tripStartTime;
+
+function checkStatusLoop(bid) {
+  if(liveTrackingInterval) clearInterval(liveTrackingInterval);
+  
+  liveTrackingInterval = setInterval(async () => {
+    const r = await api('/booking/status', {method:'POST', body:JSON.stringify({bookingId: bid})});
+    
+    if (r.ok && r.status === 'in_progress') {
+      clearInterval(liveTrackingInterval);
+      tripStartTime = r.startedAt;
+      showLiveTripScreen();
+    } else if (r.ok && r.status === 'completed') {
+      clearInterval(liveTrackingInterval);
+      document.getElementById('assigned-dtl').innerHTML = `
+        <div style="text-align:center; padding:30px 10px; background:rgba(34,197,94,.08); border-radius:12px; border:1px solid var(--green);">
+          <div style="font-size:3rem; margin-bottom:10px;">✅</div>
+          <h3 style="color:var(--green); margin:0; font-weight:800;">TRIP COMPLETED</h3>
+          <p style="color:#aaa; font-size:0.85rem; margin-top:5px;">Thank you for using LuggyBoy!</p>
+        </div>`;
+    }
+  }, 3000); 
+}
+
+function showLiveTripScreen() {
+  if(!document.getElementById('bounce-css')){
+    const style = document.createElement('style');
+    style.id = 'bounce-css';
+    style.innerHTML = `@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }`;
+    document.head.appendChild(style);
+  }
+
+  document.getElementById('assigned-dtl').innerHTML = `
+    <div style="text-align:center; padding:30px 10px; background:var(--bk3); border-radius:12px; border:1.5px solid #333; margin-bottom:15px;">
+      <div style="font-size:4rem; animation: bounce 0.8s infinite alternate;">🚚</div>
+      <h3 style="color:var(--green); margin-top:15px; font-weight:800; letter-spacing:1px; font-size:1.1rem;">LUGGAGE IN TRANSIT</h3>
+      <p style="color:#888; font-size:0.8rem; margin:5px 0 15px 0;">Your porter is heading to the drop location.</p>
+      
+      <div style="background:#000; display:inline-block; padding:10px 25px; border-radius:30px; border:1px solid #444;">
+        <span style="color:#888; font-size:0.75rem; text-transform:uppercase; margin-right:10px;">Time Elapsed</span>
+        <span id="trip-timer" style="font-size:1.5rem; font-weight:800; color:var(--y); font-family:'Syne', sans-serif;">00:00</span>
+      </div>
+    </div>
+  `;
+
+  setInterval(() => {
+    if(!tripStartTime) return;
+    const diff = Math.floor((Date.now() - tripStartTime) / 1000);
+    const m = String(Math.floor(diff / 60)).padStart(2, '0');
+    const s = String(diff % 60).padStart(2, '0');
+    const timerEl = document.getElementById('trip-timer');
+    if(timerEl) timerEl.textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+/* ══════════ DIGITAL BILL SYSTEM ══════════ */
+async function endTrip() {
+  const bid = prompt("Enter Booking ID to End Trip (e.g., LB12345):");
+  if(!bid) return;
+
+  const r = await api('/booking/end', {method:'POST', body:JSON.stringify({bookingId: bid.toUpperCase()})});
+  if(r.ok) {
+    showDigitalBill(r.bill, bid.toUpperCase());
+  } else {
+    toast(r.msg, 'r');
+  }
+}
+
+function showDigitalBill(bill, bid) {
+  const div = document.createElement('div');
+  div.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;backdrop-filter:blur(5px);";
+  
+  div.innerHTML = `
+    <div style="background:#1a1a1a; width:100%; max-width:350px; border-radius:16px; overflow:hidden; border:1.5px solid #333; font-family:'Syne', sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+      <div style="background:var(--y); padding:20px; text-align:center; color:#000;">
+        <h2 style="margin:0; font-size:1.6rem; font-weight:800; letter-spacing:1px;">LUGGY BOY</h2>
+        <div style="font-size:0.75rem; font-weight:700; opacity:0.8; margin-top:5px;">DIGITAL RECEIPT • ${bid}</div>
+      </div>
+      <div style="padding:25px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px; color:#aaa; font-size:0.95rem;">
+          <span>Time (${bill.durationMins} mins)</span>
+          <span style="color:var(--wh); font-weight:600;">₹${bill.timeCharge}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px; color:#aaa; font-size:0.95rem;">
+          <span>Base Fare</span>
+          <span style="color:var(--wh); font-weight:600;">₹${bill.baseFare}</span>
+        </div>
+        
+        <div style="border-top:1.5px dashed #444; margin:20px 0;"></div>
+        
+        <div style="display:flex; justify-content:space-between; font-weight:800; font-size:1.5rem; color:var(--wh); margin-bottom:25px;">
+          <span>Total To Pay</span>
+          <span style="color:#22c55e;">₹${bill.totalAmount}</span>
+        </div>
+        
+        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="width:100%; padding:15px; background:var(--bk3); color:var(--wh); border:1px solid #444; border-radius:8px; font-weight:700; font-size:1rem; cursor:pointer; text-transform:uppercase;">Pay & Close</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(div);
+}
+
+</script>
 </body>
 </html>
