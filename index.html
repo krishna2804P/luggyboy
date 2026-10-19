@@ -802,40 +802,60 @@ function updateSB(u){
   }
 }
 
+/* ════ AUTH API CALLS ════ */
 let devOTP='';
+
 async function sendOTP(resend=false){
   const phone=document.getElementById('ph-in').value.trim();
-  if(phone.length!==10){toast('⚠️ Enter valid 10-digit number','y');return;}
+  if(phone.length!==10){toast('⚠️ Enter 10-digit number','y');return;}
+  
   const btn=document.querySelector('#ls1 .btn-full');
-  btn.disabled=true;btn.textContent='Sending...';
+  if(btn) { btn.disabled=true; btn.textContent='Sending...'; }
+  
   const r=await api('/auth/login',{method:'POST',body:JSON.stringify({phone})});
-  btn.disabled=false;btn.textContent='GET OTP →';
+  
+  if(btn) { btn.disabled=false; btn.textContent='GET OTP →'; }
   if(!r.ok){toast('❌ '+r.msg,'r');return;}
+  
   devOTP=r.dev_otp||'';
   document.getElementById('otp-ph').textContent=phone;
   document.getElementById('ls1').classList.remove('on');
   document.getElementById('ls2').classList.add('on');
-  if(r.waLink)window.open(r.waLink,'_blank');
-  toast(resend?'📲 OTP resent!':'📲 OTP sent via WhatsApp!','g');
-}
+  
+  if(r.waLink) window.open(r.waLink,'_blank');
+  toast(resend?'📲 OTP resent!':'📲 OTP generated!','g');
 
-function oNav(el,nxt){el.value=el.value.replace(/\D/,'');if(el.value&&nxt)document.getElementById(nxt).focus();if(!nxt)verifyOTP();}
-function oBk(e,el,prv){if(e.key==='Backspace'&&!el.value&&prv)document.getElementById(prv).focus();}
+  /* 🔥 TESTING KE LIYE AUTO-FILL */
+  if(devOTP) {
+    document.getElementById('o1').value = devOTP[0];
+    document.getElementById('o2').value = devOTP[1];
+    document.getElementById('o3').value = devOTP[2];
+    document.getElementById('o4').value = devOTP[3];
+    toast('🧪 Testing: OTP Auto-filled!', 'y');
+  }
+}
 
 async function verifyOTP(){
   const otp=['o1','o2','o3','o4'].map(id=>document.getElementById(id).value).join('');
   if(otp.length!==4){toast('⚠️ Enter 4-digit OTP','y');return;}
+  
   const phone=document.getElementById('ph-in').value.trim();
   const btn=document.querySelector('#ls2 .btn-full');
-  btn.disabled=true;btn.textContent='Verifying...';
+  if(btn) { btn.disabled=true; btn.textContent='Verifying...'; }
+  
   const r=await api('/auth/verify',{method:'POST',body:JSON.stringify({phone,otp})});
-  btn.disabled=false;btn.textContent='VERIFY & ENTER →';
+  
+  if(btn) { btn.disabled=false; btn.textContent='VERIFY & ENTER →'; }
   if(!r.ok){toast('❌ '+r.msg,'r');return;}
+  
   saveUser(r.user||{phone});
-  initAuth();goS('main');
+  initAuth();
+  goS('main'); // Ye line tujhe Home Page par bhejegi
   toast('✅ Logged in!','g');
 }
 
+  
+ 
 function skipLogin(){goS('main');toast('👀 Exploring as guest — login to save bookings','y');}
 
 function logout(){
