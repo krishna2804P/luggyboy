@@ -835,26 +835,40 @@ async function sendOTP(resend=false){
   }
 }
 
-async function verifyOTP(){
-  const otp=['o1','o2','o3','o4'].map(id=>document.getElementById(id).value).join('');
-  if(otp.length!==4){toast('⚠️ Enter 4-digit OTP','y');return;}
-  
-  const phone=document.getElementById('ph-in').value.trim();
-  const btn=document.querySelector('#ls2 .btn-full');
-  if(btn) { btn.disabled=true; btn.textContent='Verifying...'; }
-  
-  const r=await api('/auth/verify',{method:'POST',body:JSON.stringify({phone,otp})});
-  
-  if(btn) { btn.disabled=false; btn.textContent='VERIFY & ENTER →'; }
-  if(!r.ok){toast('❌ '+r.msg,'r');return;}
-  
-  saveUser(r.user||{phone});
-  initAuth();
-  goS('main'); // Ye line tujhe Home Page par bhejegi
-  toast('✅ Logged in!','g');
+ async function verifyOTP(){
+  try {
+      const otp=['o1','o2','o3','o4'].map(id=>document.getElementById(id).value).join('');
+      if(otp.length!==4){toast('⚠️ Enter 4-digit OTP','y');return;}
+
+      const phone=document.getElementById('ph-in').value.trim();
+      const btn=document.querySelector('#ls2 .btn-full');
+      if(btn) { btn.disabled=true; btn.textContent='Verifying...'; }
+
+      const r=await api('/auth/verify',{method:'POST',body:JSON.stringify({phone,otp})});
+
+      if(btn) { btn.disabled=false; btn.textContent='VERIFY & ENTER →'; }
+      
+      // Agar OTP galat hai
+      if(!r.ok){toast('❌ '+r.msg,'r');return;}
+
+      // Agar OTP sahi hai (Success)
+      saveUser(r.user || {phone: phone});
+      toast('✅ Logged in!','g');
+
+      // 1. Force Update Top Navigation Button
+      document.getElementById('nav-auth').innerHTML = `<button class="btn-nav" onclick="openSB()">👤 +91${phone.slice(-4)}</button>`;
+
+      // 2. Force Screen Switch (100% Guaranteed)
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('s-main').classList.add('active');
+      window.scrollTo({top:0, behavior:'smooth'});
+
+  } catch (err) {
+      console.error(err);
+      toast('⚠️ Error: Please try again', 'r');
+  }
 }
 
-  
  
 function skipLogin(){goS('main');toast('👀 Exploring as guest — login to save bookings','y');}
 
